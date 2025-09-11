@@ -1,73 +1,210 @@
-# Welcome to your Lovable project
+# FMAC Task Manager
 
-## Project info
+A comprehensive task management application built with React, TypeScript, Firebase, and modern web technologies. This application provides a complete solution for project management, team collaboration, and task tracking with real-time email notifications.
 
-**URL**: https://lovable.dev/projects/396198c8-ef17-4bc9-be0b-e0f4b46efba6
+## 🚀 Features
 
-## How can I edit this code?
+### Core Functionality
+- **Task Management**: Create, assign, track, and manage tasks with Kanban board and list views
+- **Project Management**: Organize tasks into projects with progress tracking and team collaboration
+- **Team Management**: Add team members, manage departments, and track individual performance
+- **Real-time Updates**: Live data synchronization across all users
+- **Email Notifications**: Automatic email alerts when tasks are assigned or reassigned
 
-There are several ways of editing your application.
+### User Interface
+- **Modern Design**: Clean, responsive UI built with Tailwind CSS and shadcn/ui
+- **Dark/Light Mode**: Toggle between themes for better user experience
+- **Mobile Responsive**: Optimized for all device sizes
+- **Intuitive Navigation**: Easy-to-use sidebar navigation and breadcrumbs
 
-**Use Lovable**
+### Advanced Features
+- **Role-based Access Control**: Admin, manager, and member roles with appropriate permissions
+- **Task Filtering & Search**: Find tasks quickly with advanced filtering options
+- **Progress Tracking**: Visual progress bars and completion statistics
+- **Comment System**: Collaborate on tasks with threaded comments
+- **Activity Logging**: Track all changes and updates to tasks and projects
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/396198c8-ef17-4bc9-be0b-e0f4b46efba6) and start prompting.
+## 🛠️ Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for fast development and building
+- **Tailwind CSS** for styling
+- **shadcn/ui** for UI components
+- **React Router** for navigation
+- **React Hook Form** for form handling
+- **Zustand** for state management
 
-**Use your preferred IDE**
+### Backend
+- **Firebase Firestore** for database
+- **Firebase Authentication** for user management
+- **Firebase Cloud Functions** for serverless functions
+- **Resend** for email notifications
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Development Tools
+- **ESLint** for code linting
+- **Prettier** for code formatting
+- **TypeScript** for type safety
+- **Git** for version control
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 📦 Installation
 
-Follow these steps:
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Firebase account
+- Resend account (for email notifications)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Setup Instructions
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/mkfmac7869/fmac_task.git
+   cd fmac_task
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+3. **Set up Firebase**
+   - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
+   - Enable Firestore Database and Authentication
+   - Copy your Firebase config to `src/lib/firebaseClient.ts`
+
+4. **Set up Email Notifications (Optional)**
+   ```bash
+   # Install Firebase CLI
+   npm install -g firebase-tools
+   
+   # Login to Firebase
+   firebase login
+   
+   # Deploy functions
+   firebase deploy --only functions
+   
+   # Configure Resend API key
+   firebase functions:config:set resend.api_key="your_resend_api_key"
+   ```
+
+5. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+
+## 🔧 Configuration
+
+### Firebase Setup
+1. Create a new Firebase project
+2. Enable Firestore Database
+3. Enable Authentication (Email/Password)
+4. Set up Firestore security rules
+5. Deploy Cloud Functions for email notifications
+
+### Environment Variables
+Create a `.env.local` file in the root directory:
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
 ```
 
-**Edit a file directly in GitHub**
+## 📱 Usage
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Getting Started
+1. **Sign Up**: Create a new account or sign in
+2. **Create Projects**: Set up your first project
+3. **Add Team Members**: Invite team members to collaborate
+4. **Create Tasks**: Start adding and assigning tasks
+5. **Track Progress**: Monitor task completion and team performance
 
-**Use GitHub Codespaces**
+### Key Features
+- **Dashboard**: Overview of all tasks, projects, and team activity
+- **Tasks**: Create, assign, and track tasks with different views
+- **Projects**: Organize tasks into projects with progress tracking
+- **Team**: Manage team members and departments
+- **Calendar**: View tasks and deadlines in calendar format
+- **Reports**: Generate reports on team performance and task completion
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🚀 Deployment
 
-## What technologies are used for this project?
+### Firebase Hosting
+```bash
+# Build the project
+npm run build
 
-This project is built with:
+# Deploy to Firebase Hosting
+firebase deploy --only hosting
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Vercel
+```bash
+# Install Vercel CLI
+npm install -g vercel
 
-## How can I deploy this project?
+# Deploy
+vercel
+```
 
-Simply open [Lovable](https://lovable.dev/projects/396198c8-ef17-4bc9-be0b-e0f4b46efba6) and click on Share -> Publish.
+### Netlify
+```bash
+# Build the project
+npm run build
 
-## Can I connect a custom domain to my Lovable project?
+# Deploy to Netlify
+# Upload the dist folder to Netlify
+```
 
-Yes it is!
+## 📧 Email Notifications
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+The application includes automatic email notifications powered by Firebase Cloud Functions and Resend:
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- **Task Assignment**: Users receive emails when assigned to new tasks
+- **Task Reassignment**: Notifications when tasks are moved to different team members
+- **Professional Templates**: Clean, branded email templates with task details
+- **Direct Links**: One-click access to view task details
+
+## 🔒 Security
+
+- **Firebase Security Rules**: Comprehensive rules for data access control
+- **Role-based Permissions**: Different access levels for admin, manager, and member roles
+- **Input Validation**: Client and server-side validation for all forms
+- **Secure Authentication**: Firebase Authentication with email/password
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [React](https://reactjs.org/) for the amazing frontend framework
+- [Firebase](https://firebase.google.com/) for the backend services
+- [Tailwind CSS](https://tailwindcss.com/) for the utility-first CSS framework
+- [shadcn/ui](https://ui.shadcn.com/) for the beautiful UI components
+- [Resend](https://resend.com/) for email delivery services
+
+## 📞 Support
+
+For support, email support@fmac.com or create an issue in the GitHub repository.
+
+## 🔗 Links
+
+- **Live Demo**: [https://fmac-task.vercel.app](https://fmac-task.vercel.app)
+- **Documentation**: [https://docs.fmac.com](https://docs.fmac.com)
+- **GitHub Repository**: [https://github.com/mkfmac7869/fmac_task](https://github.com/mkfmac7869/fmac_task)
+
+---
+
+Made with ❤️ by the FMAC Team
