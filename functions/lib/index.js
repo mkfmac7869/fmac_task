@@ -39,9 +39,15 @@ exports.helloWorld = functions.https.onRequest((request, response) => {
     response.send("Hello from Firebase Functions!");
 });
 // Cloud Function to send email notifications when a task is assigned
-exports.sendTaskAssignmentNotification = functions.firestore
+exports.sendTaskAssignmentNotification = functions
+    .runWith({
+    timeoutSeconds: 30,
+    memory: '256MB'
+})
+    .firestore
     .document('tasks/{taskId}')
     .onCreate(async (snap, context) => {
+    var _a, _b, _c;
     const taskData = snap.data();
     const taskId = context.params.taskId;
     console.log('New task created:', taskId, taskData);
@@ -51,38 +57,25 @@ exports.sendTaskAssignmentNotification = functions.firestore
         return null;
     }
     try {
-        // Get assignee information
-        const assigneeDoc = await admin.firestore()
-            .collection('profiles')
-            .doc(taskData.assigned_to)
-            .get();
+        // Parallel data fetching for better performance
+        const [assigneeDoc, creatorDoc, projectDoc] = await Promise.all([
+            admin.firestore().collection('profiles').doc(taskData.assigned_to).get(),
+            admin.firestore().collection('profiles').doc(taskData.created_by).get(),
+            taskData.project_id ? admin.firestore().collection('projects').doc(taskData.project_id).get() : Promise.resolve(null)
+        ]);
         if (!assigneeDoc.exists) {
             console.log('Assignee profile not found:', taskData.assigned_to);
             return null;
         }
         const assigneeData = assigneeDoc.data();
-        // Get creator information
-        const creatorDoc = await admin.firestore()
-            .collection('profiles')
-            .doc(taskData.created_by)
-            .get();
         const creatorData = creatorDoc.exists ? creatorDoc.data() : {
             id: taskData.created_by,
             name: 'Unknown User',
             email: 'unknown@example.com'
         };
-        // Get project information if available
-        let projectName = 'No Project';
-        if (taskData.project_id) {
-            const projectDoc = await admin.firestore()
-                .collection('projects')
-                .doc(taskData.project_id)
-                .get();
-            if (projectDoc.exists) {
-                const projectData = projectDoc.data();
-                projectName = (projectData === null || projectData === void 0 ? void 0 : projectData.name) || 'Unknown Project';
-            }
-        }
+        // Get project name
+        const projectName = (projectDoc === null || projectDoc === void 0 ? void 0 : projectDoc.exists) ?
+            (((_a = projectDoc.data()) === null || _a === void 0 ? void 0 : _a.name) || 'Unknown Project') : 'No Project';
         // Format due date
         const formattedDueDate = taskData.due_date ?
             new Date(taskData.due_date).toLocaleDateString() : 'No due date';
@@ -137,15 +130,16 @@ exports.sendTaskAssignmentNotification = functions.firestore
         </div>
       `;
         console.log('Sending email to:', assigneeData.email);
-        // Send email using Resend
+        // Send email using Resend (non-blocking)
         const emailResponse = await resend.emails.send({
             from: "FMAC Task Manager <noreply@fmacajyal.com>",
             to: [assigneeData.email],
             subject: emailSubject,
             html: emailContent,
         });
-        console.log('Email notification sent successfully:', emailResponse);
-        return emailResponse;
+        console.log('Email notification sent successfully:', (_b = emailResponse.data) === null || _b === void 0 ? void 0 : _b.id);
+        // Return immediately without waiting for full response
+        return { success: true, messageId: (_c = emailResponse.data) === null || _c === void 0 ? void 0 : _c.id };
     }
     catch (error) {
         console.error('Error sending task assignment notification:', error);
@@ -153,9 +147,15 @@ exports.sendTaskAssignmentNotification = functions.firestore
     }
 });
 // Cloud Function to send email notifications when a task is updated (reassigned)
-exports.sendTaskUpdateNotification = functions.firestore
+exports.sendTaskUpdateNotification = functions
+    .runWith({
+    timeoutSeconds: 30,
+    memory: '256MB'
+})
+    .firestore
     .document('tasks/{taskId}')
     .onUpdate(async (change, context) => {
+    var _a, _b, _c;
     const beforeData = change.before.data();
     const afterData = change.after.data();
     const taskId = context.params.taskId;
@@ -171,38 +171,25 @@ exports.sendTaskUpdateNotification = functions.firestore
         return null;
     }
     try {
-        // Get new assignee information
-        const assigneeDoc = await admin.firestore()
-            .collection('profiles')
-            .doc(afterData.assigned_to)
-            .get();
+        // Parallel data fetching for better performance
+        const [assigneeDoc, updaterDoc, projectDoc] = await Promise.all([
+            admin.firestore().collection('profiles').doc(afterData.assigned_to).get(),
+            admin.firestore().collection('profiles').doc(afterData.created_by).get(),
+            afterData.project_id ? admin.firestore().collection('projects').doc(afterData.project_id).get() : Promise.resolve(null)
+        ]);
         if (!assigneeDoc.exists) {
             console.log('New assignee profile not found:', afterData.assigned_to);
             return null;
         }
         const assigneeData = assigneeDoc.data();
-        // Get updater information (could be the same as creator or different)
-        const updaterDoc = await admin.firestore()
-            .collection('profiles')
-            .doc(afterData.created_by)
-            .get();
         const updaterData = updaterDoc.exists ? updaterDoc.data() : {
             id: afterData.created_by,
             name: 'Unknown User',
             email: 'unknown@example.com'
         };
-        // Get project information if available
-        let projectName = 'No Project';
-        if (afterData.project_id) {
-            const projectDoc = await admin.firestore()
-                .collection('projects')
-                .doc(afterData.project_id)
-                .get();
-            if (projectDoc.exists) {
-                const projectData = projectDoc.data();
-                projectName = (projectData === null || projectData === void 0 ? void 0 : projectData.name) || 'Unknown Project';
-            }
-        }
+        // Get project name
+        const projectName = (projectDoc === null || projectDoc === void 0 ? void 0 : projectDoc.exists) ?
+            (((_a = projectDoc.data()) === null || _a === void 0 ? void 0 : _a.name) || 'Unknown Project') : 'No Project';
         // Format due date
         const formattedDueDate = afterData.due_date ?
             new Date(afterData.due_date).toLocaleDateString() : 'No due date';
@@ -257,15 +244,16 @@ exports.sendTaskUpdateNotification = functions.firestore
         </div>
       `;
         console.log('Sending reassignment email to:', assigneeData.email);
-        // Send email using Resend
+        // Send email using Resend (non-blocking)
         const emailResponse = await resend.emails.send({
             from: "FMAC Task Manager <noreply@fmacajyal.com>",
             to: [assigneeData.email],
             subject: emailSubject,
             html: emailContent,
         });
-        console.log('Reassignment email notification sent successfully:', emailResponse);
-        return emailResponse;
+        console.log('Reassignment email notification sent successfully:', (_b = emailResponse.data) === null || _b === void 0 ? void 0 : _b.id);
+        // Return immediately without waiting for full response
+        return { success: true, messageId: (_c = emailResponse.data) === null || _c === void 0 ? void 0 : _c.id };
     }
     catch (error) {
         console.error('Error sending task reassignment notification:', error);

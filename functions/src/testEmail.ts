@@ -5,7 +5,13 @@ import { Resend } from 'resend';
 const resend = new Resend(functions.config().resend?.api_key || process.env.RESEND_API_KEY || "re_cvqjHHqD_JBwRaMzooy3Abwq2graP49Wk");
 
 // Test function to send a manual email
-export const testEmailNotification = functions.https.onCall(async (data, context) => {
+export const testEmailNotification = functions
+  .runWith({
+    timeoutSeconds: 30,
+    memory: '256MB'
+  })
+  .https
+  .onCall(async (data, context) => {
   try {
     const { recipientEmail, recipientName, taskTitle, taskId } = data;
 

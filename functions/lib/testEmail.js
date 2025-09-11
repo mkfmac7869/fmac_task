@@ -30,7 +30,13 @@ const resend_1 = require("resend");
 // Initialize Resend
 const resend = new resend_1.Resend(((_a = functions.config().resend) === null || _a === void 0 ? void 0 : _a.api_key) || process.env.RESEND_API_KEY || "re_cvqjHHqD_JBwRaMzooy3Abwq2graP49Wk");
 // Test function to send a manual email
-exports.testEmailNotification = functions.https.onCall(async (data, context) => {
+exports.testEmailNotification = functions
+    .runWith({
+    timeoutSeconds: 30,
+    memory: '256MB'
+})
+    .https
+    .onCall(async (data, context) => {
     var _a;
     try {
         const { recipientEmail, recipientName, taskTitle, taskId } = data;

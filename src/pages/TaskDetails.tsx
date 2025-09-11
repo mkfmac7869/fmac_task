@@ -6,6 +6,7 @@ import { useTask } from '@/context/TaskContext';
 import { useAuth } from '@/context/AuthContext';
 import { Task } from '@/types/task';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { debugTaskIssue } from '@/utils/taskDebugger';
 
 // Components
 import TaskDetailsHeader from '@/components/taskDetails/TaskDetailsHeader';
@@ -28,8 +29,13 @@ const TaskDetails = () => {
   useEffect(() => {
     console.log('TaskDetails - taskId from URL:', taskId);
     console.log('TaskDetails - available task IDs:', tasks.map(t => t.id));
+    console.log('TaskDetails - tasks length:', tasks.length);
+    console.log('TaskDetails - isLoading:', isLoading);
     
     if (taskId) {
+      // Debug task issue
+      debugTaskIssue(taskId, tasks, user);
+      
       const foundTask = getTaskById(taskId);
       console.log('TaskDetails - found task:', foundTask);
       
@@ -39,11 +45,29 @@ const TaskDetails = () => {
         // Find related project
         const relatedProject = projects.find(p => p.id === foundTask.projectId);
         setProject(relatedProject || null);
+      } else {
+        console.log('TaskDetails - Task not found, setting task to undefined');
+        setTask(undefined);
       }
     }
-  }, [taskId, tasks, projects, getTaskById]);
+  }, [taskId, tasks, projects, getTaskById, isLoading, user]);
 
+  // Show loading state while tasks are being fetched
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="p-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-lg">Loading task details...</div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // If task is not found after loading is complete
   if (!task || !taskId) {
+    console.log('TaskDetails - Rendering TaskNotFound component');
     return <TaskNotFound />;
   }
   
@@ -133,3 +157,4 @@ const TaskDetails = () => {
 };
 
 export default TaskDetails;
+
