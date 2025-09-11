@@ -1,12 +1,18 @@
-import * as functions from 'firebase-functions';
+import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import { Resend } from 'resend';
+import { testEmailNotification } from './testEmail';
 
 // Initialize Firebase Admin
 admin.initializeApp();
 
 // Initialize Resend
-const resend = new Resend(functions.config().resend?.api_key || process.env.RESEND_API_KEY);
+const resend = new Resend(functions.config().resend?.api_key || process.env.RESEND_API_KEY || "re_cvqjHHqD_JBwRaMzooy3Abwq2graP49Wk");
+
+// Simple test function
+export const helloWorld = functions.https.onRequest((request, response) => {
+  response.send("Hello from Firebase Functions!");
+});
 
 interface TaskData {
   id: string;
@@ -131,7 +137,7 @@ export const sendTaskAssignmentNotification = functions.firestore
           
           <p>Please log in to your account to view the complete task details and get started.</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${functions.config().app?.public_url || 'http://localhost:5173'}/tasks/${taskId}" 
+            <a href="https://fmac-tasks.vercel.app/tasks/${taskId}" 
                style="background-color: #ea384c; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">
               View Task Details
             </a>
@@ -146,7 +152,7 @@ export const sendTaskAssignmentNotification = functions.firestore
 
       // Send email using Resend
       const emailResponse = await resend.emails.send({
-        from: "FMAC Task Manager <onboarding@resend.dev>",
+        from: "FMAC Task Manager <noreply@fmacajyal.com>",
         to: [assigneeData.email],
         subject: emailSubject,
         html: emailContent,
@@ -272,7 +278,7 @@ export const sendTaskUpdateNotification = functions.firestore
           
           <p>Please log in to your account to view the complete task details and get started.</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${functions.config().app?.public_url || 'http://localhost:5173'}/tasks/${taskId}" 
+            <a href="https://fmac-tasks.vercel.app/tasks/${taskId}" 
                style="background-color: #ea384c; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">
               View Task Details
             </a>
@@ -287,7 +293,7 @@ export const sendTaskUpdateNotification = functions.firestore
 
       // Send email using Resend
       const emailResponse = await resend.emails.send({
-        from: "FMAC Task Manager <onboarding@resend.dev>",
+        from: "FMAC Task Manager <noreply@fmacajyal.com>",
         to: [assigneeData.email],
         subject: emailSubject,
         html: emailContent,
@@ -301,3 +307,6 @@ export const sendTaskUpdateNotification = functions.firestore
       return null;
     }
   });
+
+// Export the test function
+export { testEmailNotification };

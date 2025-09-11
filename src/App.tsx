@@ -4,6 +4,9 @@ import { AuthProvider } from './context/AuthContext';
 import { TaskProvider } from './context/TaskContext';
 import { Toaster } from './components/ui/toaster';
 import AuthGuard from './components/AuthGuard';
+import { useEffect } from 'react';
+import { useAuth } from './context/AuthContext';
+import { initializePushNotifications } from './lib/pushNotificationService';
 
 // Pages
 import Index from './pages/Index';
@@ -23,11 +26,25 @@ import MemberManagement from './pages/MemberManagement';
 import DepartmentManagement from './pages/DepartmentManagement';
 import NotFound from './pages/NotFound';
 
+// Component to initialize push notifications
+function PushNotificationInitializer() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user?.id) {
+      initializePushNotifications(user.id);
+    }
+  }, [user?.id]);
+
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <TaskProvider>
+          <PushNotificationInitializer />
           <Toaster />
           <Routes>
             <Route path="/" element={<Index />} />

@@ -20,19 +20,35 @@ export const useTaskState = () => {
         console.log("Fetching tasks with user role:", user.role);
         
         // Build conditions for Firebase query
-        let conditions = [];
+        let data = [];
         
         // Admin can see all tasks, other roles have restrictions
         if (user.role !== 'admin') {
           // Non-admin users can only see tasks assigned to them or created by them
-          conditions = [
-            { field: 'assigned_to', operator: '==', value: user.id },
+          // We need to make two separate queries and combine results
+          console.log("Non-admin user - fetching tasks assigned to or created by user");
+          
+          const assignedTasks = await FirebaseService.getDocuments('tasks', [
+            { field: 'assigned_to', operator: '==', value: user.id }
+          ]);
+          
+          const createdTasks = await FirebaseService.getDocuments('tasks', [
             { field: 'created_by', operator: '==', value: user.id }
-          ];
+          ]);
+          
+          // Combine and deduplicate tasks
+          const allTasks = [...assignedTasks, ...createdTasks];
+          const uniqueTasks = allTasks.filter((task, index, self) => 
+            index === self.findIndex(t => t.id === task.id)
+          );
+          
+          data = uniqueTasks;
+        } else {
+          console.log("Admin user - fetching all tasks");
+          data = await FirebaseService.getDocuments('tasks');
         }
         
         console.log("About to execute query");
-        const data = await FirebaseService.getDocuments('tasks', conditions);
         console.log("Query executed, data length:", data ? data.length : 0);
 
         if (data && data.length > 0) {

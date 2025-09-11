@@ -24,19 +24,24 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendTaskUpdateNotification = exports.sendTaskAssignmentNotification = void 0;
-const functions = __importStar(require("firebase-functions"));
+exports.testEmailNotification = exports.sendTaskUpdateNotification = exports.sendTaskAssignmentNotification = exports.helloWorld = void 0;
+const functions = __importStar(require("firebase-functions/v1"));
 const admin = __importStar(require("firebase-admin"));
 const resend_1 = require("resend");
+const testEmail_1 = require("./testEmail");
+Object.defineProperty(exports, "testEmailNotification", { enumerable: true, get: function () { return testEmail_1.testEmailNotification; } });
 // Initialize Firebase Admin
 admin.initializeApp();
 // Initialize Resend
-const resend = new resend_1.Resend(((_a = functions.config().resend) === null || _a === void 0 ? void 0 : _a.api_key) || process.env.RESEND_API_KEY);
+const resend = new resend_1.Resend(((_a = functions.config().resend) === null || _a === void 0 ? void 0 : _a.api_key) || process.env.RESEND_API_KEY || "re_cvqjHHqD_JBwRaMzooy3Abwq2graP49Wk");
+// Simple test function
+exports.helloWorld = functions.https.onRequest((request, response) => {
+    response.send("Hello from Firebase Functions!");
+});
 // Cloud Function to send email notifications when a task is assigned
 exports.sendTaskAssignmentNotification = functions.firestore
     .document('tasks/{taskId}')
     .onCreate(async (snap, context) => {
-    var _a;
     const taskData = snap.data();
     const taskId = context.params.taskId;
     console.log('New task created:', taskId, taskData);
@@ -121,7 +126,7 @@ exports.sendTaskAssignmentNotification = functions.firestore
           
           <p>Please log in to your account to view the complete task details and get started.</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${((_a = functions.config().app) === null || _a === void 0 ? void 0 : _a.public_url) || 'http://localhost:5173'}/tasks/${taskId}" 
+            <a href="https://fmac-tasks.vercel.app/tasks/${taskId}" 
                style="background-color: #ea384c; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">
               View Task Details
             </a>
@@ -134,7 +139,7 @@ exports.sendTaskAssignmentNotification = functions.firestore
         console.log('Sending email to:', assigneeData.email);
         // Send email using Resend
         const emailResponse = await resend.emails.send({
-            from: "FMAC Task Manager <onboarding@resend.dev>",
+            from: "FMAC Task Manager <noreply@fmacajyal.com>",
             to: [assigneeData.email],
             subject: emailSubject,
             html: emailContent,
@@ -151,7 +156,6 @@ exports.sendTaskAssignmentNotification = functions.firestore
 exports.sendTaskUpdateNotification = functions.firestore
     .document('tasks/{taskId}')
     .onUpdate(async (change, context) => {
-    var _a;
     const beforeData = change.before.data();
     const afterData = change.after.data();
     const taskId = context.params.taskId;
@@ -242,7 +246,7 @@ exports.sendTaskUpdateNotification = functions.firestore
           
           <p>Please log in to your account to view the complete task details and get started.</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${((_a = functions.config().app) === null || _a === void 0 ? void 0 : _a.public_url) || 'http://localhost:5173'}/tasks/${taskId}" 
+            <a href="https://fmac-tasks.vercel.app/tasks/${taskId}" 
                style="background-color: #ea384c; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">
               View Task Details
             </a>
@@ -255,7 +259,7 @@ exports.sendTaskUpdateNotification = functions.firestore
         console.log('Sending reassignment email to:', assigneeData.email);
         // Send email using Resend
         const emailResponse = await resend.emails.send({
-            from: "FMAC Task Manager <onboarding@resend.dev>",
+            from: "FMAC Task Manager <noreply@fmacajyal.com>",
             to: [assigneeData.email],
             subject: emailSubject,
             html: emailContent,
