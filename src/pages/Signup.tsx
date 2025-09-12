@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { FirebaseService } from '@/lib/firebaseService';
+import { initializeDefaultDepartments } from '@/utils/initDepartments';
 
 interface Department {
   id: string;
@@ -22,27 +23,63 @@ const Signup = () => {
   const [department, setDepartment] = useState('');
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingDepartments, setIsLoadingDepartments] = useState(true);
   const { signup } = useAuth();
 
   // Fetch departments on component mount
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const data = await FirebaseService.getDocuments('departments');
+        setIsLoadingDepartments(true);
+        
+        // First try to get existing departments
+        let data = await FirebaseService.getDocuments('departments');
+        
+        // If no departments exist, initialize default ones
+        if (!data || data.length === 0) {
+          console.log('No departments found, initializing default departments...');
+          await initializeDefaultDepartments();
+          data = await FirebaseService.getDocuments('departments');
+        }
+        
         if (data && data.length > 0) {
           const formattedDepartments = data.map(dept => ({
             id: dept.id,
             name: dept.name
           }));
           setDepartments(formattedDepartments);
+        } else {
+          // Final fallback - use hardcoded departments
+          const fallbackDepartments = [
+            { id: 'dept-1', name: 'Management' },
+            { id: 'dept-2', name: 'IT' },
+            { id: 'dept-3', name: 'Marketing' },
+            { id: 'dept-4', name: 'Operations' },
+            { id: 'dept-5', name: 'Finance' },
+            { id: 'dept-6', name: 'HR' }
+          ];
+          setDepartments(fallbackDepartments);
         }
       } catch (error) {
         console.error('Error fetching departments:', error);
+        // Use fallback departments on error
+        const fallbackDepartments = [
+          { id: 'dept-1', name: 'Management' },
+          { id: 'dept-2', name: 'IT' },
+          { id: 'dept-3', name: 'Marketing' },
+          { id: 'dept-4', name: 'Operations' },
+          { id: 'dept-5', name: 'Finance' },
+          { id: 'dept-6', name: 'HR' }
+        ];
+        setDepartments(fallbackDepartments);
+        
         toast({
-          title: 'Error',
-          description: 'Could not load departments. Please try again.',
-          variant: 'destructive'
+          title: 'Warning',
+          description: 'Using default departments. Contact admin to add more departments.',
+          variant: 'default'
         });
+      } finally {
+        setIsLoadingDepartments(false);
       }
     };
     
@@ -166,9 +203,20 @@ const Signup = () => {
                 <label htmlFor="department" className="text-sm font-medium">
                   Department
                 </label>
-                <Select value={department} onValueChange={setDepartment} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your department" />
+                <Select 
+                  value={department} 
+                  onValueChange={setDepartment} 
+                  required
+                  disabled={isLoadingDepartments}
+                >
+                  <SelectTrigger className={isLoadingDepartments ? "opacity-50" : ""}>
+                    <SelectValue 
+                      placeholder={
+                        isLoadingDepartments 
+                          ? "Loading departments..." 
+                          : "Select your department"
+                      } 
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {departments.length > 0 ? (
@@ -179,11 +227,14 @@ const Signup = () => {
                       ))
                     ) : (
                       <SelectItem value="loading" disabled>
-                        Loading departments...
+                        {isLoadingDepartments ? "Loading departments..." : "No departments available"}
                       </SelectItem>
                     )}
                   </SelectContent>
                 </Select>
+                {isLoadingDepartments && (
+                  <p className="text-xs text-gray-500">Loading departments from database...</p>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <Input type="checkbox" id="terms" className="h-4 w-4" required />
