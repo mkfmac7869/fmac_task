@@ -18,7 +18,7 @@ import { TaskEditingProvider } from '@/components/taskDetails/TaskEditingProvide
 
 const TaskDetails = () => {
   const { taskId } = useParams<{ taskId: string }>();
-  const { tasks, getTaskById, updateTask, deleteTask, projects } = useTask();
+  const { tasks, getTaskById, updateTask, deleteTask, projects, isLoading } = useTask();
   const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
