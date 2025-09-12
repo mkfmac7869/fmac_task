@@ -23,8 +23,8 @@ const NewMemberForm = ({ departments, onMemberAdded, onCancel }: NewMemberFormPr
     name: '',
     email: '',
     phone: '',
-    role: user?.role === 'head' ? 'member' : '',
-    department: user?.role === 'head' ? user.department || '' : ''
+    role: user?.roles?.includes('head') ? 'member' : '',
+    department: user?.roles?.includes('head') ? user.department || '' : ''
   });
   
   const handleChange = (field: string, value: string) => {
@@ -129,26 +129,26 @@ const NewMemberForm = ({ departments, onMemberAdded, onCancel }: NewMemberFormPr
         <Select 
           value={formData.role} 
           onValueChange={(value) => handleChange('role', value)}
-          disabled={user?.role === 'head'}
+          disabled={user?.roles?.includes('head')}
         >
           <SelectTrigger id="role">
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
-            {user?.role === 'admin' && (
+            {user?.roles?.includes('admin') && (
               <>
                 <SelectItem value="head">Department Head</SelectItem>
                 <SelectItem value="member">Team Member</SelectItem>
               </>
             )}
-            {user?.role === 'head' && (
+            {user?.roles?.includes('head') && (
               <SelectItem value="member">Team Member</SelectItem>
             )}
           </SelectContent>
         </Select>
       </div>
       
-      {user?.role === 'admin' && (
+      {user?.roles?.includes('admin') && (
         <div className="space-y-2">
           <Label htmlFor="department">Department</Label>
           <Select 

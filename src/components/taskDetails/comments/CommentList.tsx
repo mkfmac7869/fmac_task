@@ -32,7 +32,7 @@ const CommentList = ({ comments, onDeleteComment }: CommentListProps) => {
     // 2. User is an admin, or
     // 3. User has delete_comments permission
     return user?.id === commentUserId || 
-           user?.role === 'admin' ||
+           user?.roles?.includes('admin') ||
            hasPermission('delete_comments');
   };
   

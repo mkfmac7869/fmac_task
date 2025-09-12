@@ -3,7 +3,7 @@ export const debugTaskIssue = (taskId: string, tasks: any[], user: any) => {
   console.log('=== TASK DEBUG INFO ===');
   console.log('Requested Task ID:', taskId);
   console.log('User ID:', user?.id);
-  console.log('User Role:', user?.role);
+  console.log('User Role:', user?.roles?.[0]);
   console.log('Total Tasks Available:', tasks.length);
   console.log('Available Task IDs:', tasks.map(t => t.id));
   
@@ -20,7 +20,7 @@ export const debugTaskIssue = (taskId: string, tasks: any[], user: any) => {
     });
     
     // Check permissions
-    const canView = user?.role === 'admin' || 
+    const canView = user?.roles?.includes('admin') || 
                    foundTask.assignee?.id === user?.id || 
                    foundTask.creator?.id === user?.id;
     console.log('User can view this task:', canView);

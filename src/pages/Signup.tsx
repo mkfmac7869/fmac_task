@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { FirebaseService } from '@/lib/firebaseService';
-import { initializeDefaultDepartments } from '@/utils/initDepartments';
 
 interface Department {
   id: string;
@@ -32,51 +31,31 @@ const Signup = () => {
       try {
         setIsLoadingDepartments(true);
         
-        // First try to get existing departments
-        let data = await FirebaseService.getDocuments('departments');
+        // Get departments from Firebase
+        const data = await FirebaseService.getDocuments('departments');
         
-        // If no departments exist, initialize default ones
-        if (!data || data.length === 0) {
-          console.log('No departments found, initializing default departments...');
-          await initializeDefaultDepartments();
-          data = await FirebaseService.getDocuments('departments');
-        }
-        
-        if (data && data.length > 0) {
+        if (data && Array.isArray(data) && data.length > 0) {
           const formattedDepartments = data.map(dept => ({
             id: dept.id,
             name: dept.name
           }));
           setDepartments(formattedDepartments);
         } else {
-          // Final fallback - use hardcoded departments
-          const fallbackDepartments = [
-            { id: 'dept-1', name: 'Management' },
-            { id: 'dept-2', name: 'IT' },
-            { id: 'dept-3', name: 'Marketing' },
-            { id: 'dept-4', name: 'Operations' },
-            { id: 'dept-5', name: 'Finance' },
-            { id: 'dept-6', name: 'HR' }
-          ];
-          setDepartments(fallbackDepartments);
+          // No departments found - show empty state
+          setDepartments([]);
+          toast({
+            title: 'No Departments Available',
+            description: 'Please contact your administrator to set up departments.',
+            variant: 'destructive'
+          });
         }
       } catch (error) {
         console.error('Error fetching departments:', error);
-        // Use fallback departments on error
-        const fallbackDepartments = [
-          { id: 'dept-1', name: 'Management' },
-          { id: 'dept-2', name: 'IT' },
-          { id: 'dept-3', name: 'Marketing' },
-          { id: 'dept-4', name: 'Operations' },
-          { id: 'dept-5', name: 'Finance' },
-          { id: 'dept-6', name: 'HR' }
-        ];
-        setDepartments(fallbackDepartments);
-        
+        setDepartments([]);
         toast({
-          title: 'Warning',
-          description: 'Using default departments. Contact admin to add more departments.',
-          variant: 'default'
+          title: 'Error',
+          description: 'Failed to load departments. Please try again or contact support.',
+          variant: 'destructive'
         });
       } finally {
         setIsLoadingDepartments(false);

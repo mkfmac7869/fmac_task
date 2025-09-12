@@ -26,7 +26,7 @@ const MemberProfileView = ({ member, memberTasks, projects }: MemberProfileViewP
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
   
   // Check if the current user can assign tasks (admin or head)
-  const canAssignTasks = user?.role === 'admin' || user?.role === 'head';
+  const canAssignTasks = user?.roles?.includes('admin') || user?.roles?.includes('head');
   
   const handleBack = () => {
     navigate('/team');

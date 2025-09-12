@@ -27,7 +27,9 @@ const formSchema = z.object({
   password: z.string().min(6, {
     message: "Password must be at least 6 characters.",
   }).optional().or(z.literal('')),
-  role: z.enum(['admin', 'manager', 'head', 'member']),
+  roles: z.array(z.enum(['admin', 'head', 'member'])).min(1, {
+    message: "Please select at least one role.",
+  }),
   department: z.string().min(2, {
     message: "Department is required."
   })
@@ -59,7 +61,7 @@ const MemberFormDialog = ({
       name: "",
       email: "",
       password: "",
-      role: "member" as UserRole,
+      roles: ["member"],
       department: ""
     },
   });
@@ -68,20 +70,23 @@ const MemberFormDialog = ({
   useEffect(() => {
     if (isOpen) {
       console.log("Dialog opened, resetting form with user data:", userToEdit);
+      console.log("User roles:", userToEdit?.roles);
       if (isEditMode && userToEdit) {
-        form.reset({
+        const formData = {
           name: userToEdit?.name || "",
           email: userToEdit?.email || "",
           password: "", // Never pass password back
-          role: (userToEdit?.role as UserRole) || "member",
+          roles: userToEdit?.roles || ["member"],
           department: userToEdit?.department || ""
-        });
+        };
+        console.log("Setting form data:", formData);
+        form.reset(formData);
       } else {
         form.reset({
           name: "",
           email: "",
           password: "",
-          role: "member" as UserRole,
+          roles: ["member"],
           department: ""
         });
       }
@@ -96,13 +101,13 @@ const MemberFormDialog = ({
       if (!isEditMode) {
         console.log("Creating new user account with data:", {
           name: data.name,
-          role: data.role,
+          roles: data.roles,
           department: data.department
         });
         
         const userData = {
           name: data.name,
-          role: data.role,
+          roles: data.roles,
           department: data.department
         };
         

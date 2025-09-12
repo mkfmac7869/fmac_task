@@ -30,10 +30,10 @@ const TeamHeader = ({
   const [dialogTriggerKey, setDialogTriggerKey] = useState('dialog-trigger');
   
   // Determine if the user can add new members
-  const canAddMembers = user?.role === 'admin' || user?.role === 'head';
+  const canAddMembers = user?.roles?.includes('admin') || user?.roles?.includes('head');
   
   // Get the correct departments to pass to the dialog
-  const departmentsToShow = user?.role === 'head' && user.department 
+  const departmentsToShow = user?.roles?.includes('head') && user.department 
     ? [user.department] 
     : departments;
 
@@ -45,7 +45,7 @@ const TeamHeader = ({
           {isLoading ? (
             <Skeleton className="h-4 w-48" />
           ) : (
-            user?.role === 'admin' 
+            user?.roles?.includes('admin') 
               ? 'Manage all departments and team members' 
               : `View ${user?.department} team members`
           )}

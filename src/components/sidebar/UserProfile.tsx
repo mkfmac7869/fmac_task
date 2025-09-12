@@ -22,7 +22,7 @@ const UserProfile = ({ user }: UserProfileProps) => {
           {user?.name || 'User'}
         </p>
         <p className="text-xs text-gray-500 truncate">
-          {user?.role.charAt(0).toUpperCase() + user?.role.slice(1) || 'Member'}
+          {user?.roles?.[0] ? user.roles[0].charAt(0).toUpperCase() + user.roles[0].slice(1) : 'Member'}
         </p>
       </div>
       <Link to="/settings">

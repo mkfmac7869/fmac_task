@@ -5,9 +5,7 @@ import Layout from '@/components/Layout';
 import DepartmentList from '@/components/departments/DepartmentList';
 import AddDepartmentDialog from '@/components/departments/AddDepartmentDialog';
 import { User, UserRole } from '@/types/auth';
-import { db } from '@/lib/firebaseClient';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { DepartmentService, UserService, AuthService } from '@/lib/firebaseService';
+import { DepartmentService, UserService } from '@/lib/firebaseService';
 import { toast } from '@/hooks/use-toast';
 
 export type Department = {
@@ -24,7 +22,7 @@ const DepartmentManagement = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch departments from Supabase
+  // Fetch departments from Firebase
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
@@ -39,21 +37,14 @@ const DepartmentManagement = () => {
         }
 
         // Ensure user has permission to view departments
-        if (user.role !== 'admin' && user.role !== 'head') {
+        if (!user.roles.includes('admin') && !user.roles.includes('head')) {
           console.log("User doesn't have permission to view departments");
           setIsLoading(false);
           return;
         }
 
-        // Get the JWT token to ensure authentication header is sent
-        const { data: authData } = await AuthService.getSession();
-        console.log("Auth session data:", authData?.session ? "Session exists" : "No session");
-
-        // Get departments
+        // Get departments from Firebase
         const departmentsData = await DepartmentService.getDepartments();
-
-        // No error handling needed for Firebase service
-
         console.log("Departments data fetched:", departmentsData);
 
         if (!departmentsData || departmentsData.length === 0) {
@@ -78,9 +69,11 @@ const DepartmentManagement = () => {
                   id: headData.id,
                   name: headData.name || 'Unknown',
                   email: headData.email || '',
-                  role: (headData.role as UserRole) || 'member',
+                  roles: headData.roles || ['member'],
                   department: headData.department || '',
-                  avatar: headData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(headData.name || 'User')}&background=ea384c&color=fff`
+                  avatar: headData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(headData.name || 'User')}&background=ea384c&color=fff`,
+                  isApproved: headData.isApproved || false,
+                  createdAt: headData.createdAt || new Date()
                 };
               }
             }
@@ -121,7 +114,7 @@ const DepartmentManagement = () => {
       console.log("Creating new department:", department);
       
       // Make sure the user has admin privileges
-      if (!user || user.role !== 'admin') {
+      if (!user || !user.roles.includes('admin')) {
         toast({
           title: "Permission Denied",
           description: "Only administrators can add departments",
@@ -130,18 +123,7 @@ const DepartmentManagement = () => {
         return;
       }
       
-      // Verify authentication before proceeding
-      const { data: authData } = await AuthService.getSession();
-      if (!authData?.session) {
-        toast({
-          title: "Authentication Error",
-          description: "You must be logged in to create departments",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      console.log("Auth session data on create:", authData?.session ? "Session exists" : "No session");
+      // User authentication is already checked above
       
       // Prepare data for insert
       const insertData = {
@@ -237,18 +219,13 @@ const DepartmentManagement = () => {
     try {
       console.log("Fetching available heads");
       
-      // First check if we have a session
-      const { data: { session } } = await AuthService.getSession();
-      if (!session) {
-        console.error("No active session found");
-        return [];
-      }
-      
-      // Fetch all users with role 'member' or 'head'
+      // Fetch all users
       const data = await UserService.getUsers();
       
       // Filter users with role 'member' or 'head'
-      const filteredUsers = data.filter(user => user.role === 'member' || user.role === 'head');
+      const filteredUsers = data.filter(user => 
+        user.roles.includes('member') || user.roles.includes('head')
+      );
       
       if (!filteredUsers || filteredUsers.length === 0) {
         console.log("No users found");
@@ -263,15 +240,10 @@ const DepartmentManagement = () => {
         .map(dept => dept.head?.id);
       
       const availableHeads = filteredUsers
-        .filter(user => user.role === 'member' || !currentHeadIds.includes(user.id))
-        .map(user => ({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role as UserRole,
-          department: user.department,
-          avatar: user.avatar
-        }));
+        .filter(user => 
+          user.roles.includes('member') || 
+          (!currentHeadIds.includes(user.id) && user.roles.includes('head'))
+        );
       
       console.log("Available heads:", availableHeads);
       return availableHeads;
@@ -286,7 +258,7 @@ const DepartmentManagement = () => {
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Department Management</h1>
-          {user && user.role === 'admin' && (
+          {user && user.roles.includes('admin') && (
             <AddDepartmentDialog 
               onDepartmentAdded={handleAddDepartment}
               getAvailableHeads={getAvailableHeads}

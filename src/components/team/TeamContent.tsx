@@ -27,12 +27,12 @@ const TeamContent = ({
   // Filter team members based on user role and search/department filters
   const filteredMembers = membersList.filter(member => {
     // Filter by user role
-    if (user?.role === 'member') {
+    if (user?.roles?.includes('member') && !user?.roles?.includes('admin') && !user?.roles?.includes('head')) {
       // Regular members can only see their department
       if (member.department !== user.department) {
         return false;
       }
-    } else if (user?.role === 'head') {
+    } else if (user?.roles?.includes('head')) {
       // Department heads can see all members in their department
       if (member.department !== user.department) {
         return false;
@@ -53,7 +53,7 @@ const TeamContent = ({
     }
     
     // Apply department filter (admin only)
-    if (user?.role === 'admin' && selectedDepartment !== 'all') {
+    if (user?.roles?.includes('admin') && selectedDepartment !== 'all') {
       if (member.department !== selectedDepartment) {
         return false;
       }
@@ -68,7 +68,7 @@ const TeamContent = ({
   const totalTasksInProgress = filteredMembers.reduce((sum, member) => sum + member.tasksInProgress, 0);
   
   // Determine if the user can invite/assign tasks
-  const canInvite = user?.role === 'admin' || user?.role === 'head';
+  const canInvite = user?.roles?.includes('admin') || user?.roles?.includes('head');
 
   return (
     <>
@@ -81,7 +81,7 @@ const TeamContent = ({
       />
       
       {/* Department filter - Only for admins */}
-      {user?.role === 'admin' && (
+      {user?.roles?.includes('admin') && (
         <DepartmentFilter 
           selectedDepartment={selectedDepartment}
           setSelectedDepartment={setSelectedDepartment}

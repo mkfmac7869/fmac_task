@@ -172,10 +172,12 @@ const MemberFormFields = ({ form, isEditMode }: MemberFormFieldsProps) => {
       <FormField
         control={form.control}
         name="roles"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Roles</FormLabel>
-            <div className="space-y-3">
+        render={({ field }) => {
+          console.log("MemberFormFields - Current field value:", field.value);
+          return (
+            <FormItem>
+              <FormLabel>Roles</FormLabel>
+              <div className="space-y-3">
               {/* Selected Roles Display */}
               {field.value && field.value.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -228,7 +230,8 @@ const MemberFormFields = ({ form, isEditMode }: MemberFormFieldsProps) => {
             </div>
             <FormMessage />
           </FormItem>
-        )}
+          );
+        }}
       />
     </>
   );

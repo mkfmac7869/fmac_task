@@ -28,9 +28,13 @@ export const useFetchMembers = () => {
           id: profile.id,
           name: profile.name || 'Unknown',
           email: profile.email || '',
-          role: (profile.role as UserRole) || 'member',
+          roles: profile.roles || (profile.role ? [profile.role] : ['member']),
           avatar: profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=ea384c&color=fff`,
-          department: profile.department || ''
+          department: profile.department || '',
+          isApproved: profile.isApproved || false,
+          approvedBy: profile.approvedBy,
+          approvedAt: profile.approvedAt?.toDate(),
+          createdAt: profile.createdAt?.toDate() || new Date()
         }));
         
         console.log("Fetched users:", formattedUsers);
@@ -52,8 +56,12 @@ export const useFetchMembers = () => {
                 email: session.user.email || 'admin@example.com',
                 name: 'Admin User', 
                 avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ea384c&color=fff',
-                role: 'admin',
-                department: 'Management'
+                roles: ['admin'],
+                department: 'Management',
+                isApproved: true,
+                approvedBy: session.user.id,
+                approvedAt: new Date(),
+                createdAt: new Date()
               });
               
               // Re-fetch users after creating profile
@@ -63,9 +71,13 @@ export const useFetchMembers = () => {
                   id: profile.id,
                   name: profile.name || 'Unknown',
                   email: profile.email || '',
-                  role: (profile.role as UserRole) || 'member',
+                  roles: profile.roles || (profile.role ? [profile.role] : ['member']),
                   avatar: profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=ea384c&color=fff`,
-                  department: profile.department || ''
+                  department: profile.department || '',
+                  isApproved: profile.isApproved || false,
+                  approvedBy: profile.approvedBy,
+                  approvedAt: profile.approvedAt?.toDate(),
+                  createdAt: profile.createdAt?.toDate() || new Date()
                 }));
                 setUsers(formattedUsers);
               }

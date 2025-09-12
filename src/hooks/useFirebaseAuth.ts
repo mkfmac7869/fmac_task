@@ -27,17 +27,41 @@ export const useFirebaseAuth = () => {
       
       if (userDoc.exists()) {
         const profileData = userDoc.data();
-        // Check if user is approved
-        if (!profileData.isApproved) {
+        // Check if user is approved (skip for admin users)
+        const isAdmin = profileData.role === 'admin' || profileData.roles?.includes('admin');
+        
+        // Auto-fix admin profiles if needed
+        if (isAdmin && !profileData.isApproved) {
+          console.log('🔧 Auto-fixing admin profile...');
+          await updateDoc(doc(db, 'profiles', firebaseUser.uid), {
+            isApproved: true,
+            roles: profileData.roles || (profileData.role ? [profileData.role] : ['admin']),
+            approvedBy: profileData.approvedBy || firebaseUser.uid,
+            approvedAt: profileData.approvedAt || new Date(),
+            updatedAt: new Date()
+          });
+          profileData.isApproved = true;
+          profileData.roles = profileData.roles || (profileData.role ? [profileData.role] : ['admin']);
+        }
+        
+        if (!profileData.isApproved && !isAdmin) {
           throw new Error('Your account is pending approval. Please contact your department head or admin.');
         }
+        
+        const convertedRoles = profileData.roles || (profileData.role ? [profileData.role] : ['member']);
+        console.log('🔍 Role conversion:', {
+          originalRole: profileData.role,
+          originalRoles: profileData.roles,
+          convertedRoles: convertedRoles,
+          isAdmin: isAdmin
+        });
         
         return {
           id: firebaseUser.uid,
           email: firebaseUser.email || '',
           name: profileData.name || firebaseUser.displayName || 'User',
           avatar: profileData.avatar || firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || 'User')}&background=ea384c&color=fff`,
-          roles: profileData.roles || (profileData.role ? [profileData.role] : ['member']),
+          roles: convertedRoles,
           department: profileData.department || 'General',
           isApproved: profileData.isApproved || false,
           approvedBy: profileData.approvedBy,

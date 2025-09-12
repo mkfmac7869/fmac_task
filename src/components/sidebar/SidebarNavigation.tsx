@@ -31,7 +31,7 @@ const SidebarNavigation = ({ user, bottomNav = false }: SidebarNavigationProps) 
   ];
   
   // Only add admin routes if user has the right role
-  if (user?.role === 'admin') {
+  if (user?.roles?.includes('admin')) {
     navItems.push(
       { to: '/reports', label: 'Reports', icon: PieChart },
       { to: '/member-management', label: 'Members', icon: Users },

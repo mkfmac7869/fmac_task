@@ -46,7 +46,7 @@ const AddMemberDialog = ({ departments, onMemberAdded, ...props }: AddMemberDial
   // Get available members that aren't already in the team
   useEffect(() => {
     const fetchAvailableMembers = async () => {
-      if (user?.role === 'head' && open) {
+      if (user?.roles?.includes('head') && open) {
         setIsLoading(true);
         try {
           // Get all members that don't have a department or are not in this head's department
@@ -121,13 +121,13 @@ const AddMemberDialog = ({ departments, onMemberAdded, ...props }: AddMemberDial
           <DialogHeader>
             <DialogTitle>Add New Team Member</DialogTitle>
             <DialogDescription>
-              {user?.role === 'head' 
+              {user?.roles?.includes('head') 
                 ? "Add an existing member or create a new one for your department." 
                 : "Fill out the form to add a new member to the team."}
             </DialogDescription>
           </DialogHeader>
           
-          {user?.role === 'head' ? (
+          {user?.roles?.includes('head') ? (
             <Tabs defaultValue="existing" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="existing">Existing Member</TabsTrigger>

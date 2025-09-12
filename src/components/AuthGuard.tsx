@@ -35,7 +35,7 @@ const AuthGuard = ({
   }
 
   // Check role if required
-  if (requiredRole && isAuthenticated && user?.role !== requiredRole) {
+  if (requiredRole && isAuthenticated && !user?.roles?.includes(requiredRole)) {
     return <Navigate to="/dashboard" state={{ message: "You don't have permission to access this page" }} replace />;
   }
   
