@@ -17,7 +17,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 import { FirebaseService } from '@/lib/firebaseService';
+import { UserRole } from '@/types/auth';
 
 interface MemberFormFieldsProps {
   form: UseFormReturn<FormData>;
@@ -32,6 +37,33 @@ interface Department {
 const MemberFormFields = ({ form, isEditMode }: MemberFormFieldsProps) => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Helper functions for role display
+  const getRoleDisplayName = (role: UserRole): string => {
+    switch (role) {
+      case 'admin':
+        return 'Admin';
+      case 'head':
+        return 'Department Head';
+      case 'member':
+        return 'Team Member';
+      default:
+        return role;
+    }
+  };
+
+  const getRoleDescription = (role: UserRole): string => {
+    switch (role) {
+      case 'admin':
+        return 'Full system access';
+      case 'head':
+        return 'Manage department and assign tasks';
+      case 'member':
+        return 'Basic team member access';
+      default:
+        return '';
+    }
+  };
 
   // Fetch departments from Firebase
   useEffect(() => {
@@ -139,23 +171,61 @@ const MemberFormFields = ({ form, isEditMode }: MemberFormFieldsProps) => {
       
       <FormField
         control={form.control}
-        name="role"
+        name="roles"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Role</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="head">Department Head</SelectItem>
-                <SelectItem value="member">Team Member</SelectItem>
-              </SelectContent>
-            </Select>
+            <FormLabel>Roles</FormLabel>
+            <div className="space-y-3">
+              {/* Selected Roles Display */}
+              {field.value && field.value.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {field.value.map((role) => (
+                    <Badge key={role} variant="secondary" className="flex items-center gap-2 px-3 py-1">
+                      <span className="text-sm">{getRoleDisplayName(role)}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => {
+                          const newRoles = field.value.filter(r => r !== role);
+                          field.onChange(newRoles);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              
+              {/* Role Selection Checkboxes */}
+              <div className="space-y-2">
+                {(['admin', 'head', 'member'] as UserRole[]).map((role) => (
+                  <div key={role} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded">
+                    <Checkbox
+                      id={`role-${role}`}
+                      checked={field.value?.includes(role) || false}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          const newRoles = [...(field.value || []), role];
+                          field.onChange(newRoles);
+                        } else {
+                          const newRoles = field.value?.filter(r => r !== role) || [];
+                          field.onChange(newRoles);
+                        }
+                      }}
+                    />
+                    <label htmlFor={`role-${role}`} className="text-sm font-medium cursor-pointer">
+                      {getRoleDisplayName(role)}
+                    </label>
+                    <span className="text-xs text-gray-500">
+                      {getRoleDescription(role)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
             <FormMessage />
           </FormItem>
         )}

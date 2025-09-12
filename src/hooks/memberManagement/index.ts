@@ -38,7 +38,7 @@ export const useMemberManagement = () => {
     fetchUsers
   );
   
-  const { getRoleBadgeColor } = useMemberUI();
+  const { getRoleBadgeColor, getRoleDisplayName } = useMemberUI();
 
   return {
     users,
@@ -56,6 +56,7 @@ export const useMemberManagement = () => {
     handleEditUser,
     handleDeleteUser,
     getRoleBadgeColor,
+    getRoleDisplayName,
     onSubmit,
     isCrudSubmitting,
     fetchUsers

@@ -7,8 +7,6 @@ export const useMemberUI = (): UseMemberUI => {
     switch (role) {
       case 'admin':
         return "bg-fmac-red text-white";
-      case 'manager':
-        return "bg-blue-500 text-white";
       case 'head':
         return "bg-green-500 text-white";
       case 'member':
@@ -18,7 +16,21 @@ export const useMemberUI = (): UseMemberUI => {
     }
   };
 
+  const getRoleDisplayName = (role: UserRole): string => {
+    switch (role) {
+      case 'admin':
+        return 'Admin';
+      case 'head':
+        return 'Head';
+      case 'member':
+        return 'Member';
+      default:
+        return role;
+    }
+  };
+
   return {
-    getRoleBadgeColor
+    getRoleBadgeColor,
+    getRoleDisplayName
   };
 };

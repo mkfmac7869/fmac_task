@@ -5,7 +5,7 @@ export type FormData = {
   name: string;
   email: string;
   password?: string;
-  role: UserRole;
+  roles: UserRole[];
   department: string;
 };
 
@@ -34,4 +34,5 @@ export interface UseMemberCrudOperations {
 
 export interface UseMemberUI {
   getRoleBadgeColor: (role: UserRole) => string;
+  getRoleDisplayName: (role: UserRole) => string;
 }

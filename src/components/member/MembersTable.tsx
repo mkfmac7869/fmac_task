@@ -32,6 +32,7 @@ interface MembersTableProps {
   onDeleteUser: (userId: string) => void;
   onAddUser: () => void;
   getRoleBadgeColor: (role: UserRole) => string;
+  getRoleDisplayName: (role: UserRole) => string;
   isLoading?: boolean;
 }
 
@@ -41,6 +42,7 @@ const MembersTable = ({
   onDeleteUser,
   onAddUser,
   getRoleBadgeColor,
+  getRoleDisplayName,
   isLoading = false
 }: MembersTableProps) => {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -127,10 +129,14 @@ const MembersTable = ({
               </div>
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs text-gray-500">Role</span>
-                  <Badge className={getRoleBadgeColor(user.role)}>
-                    {user.role}
-                  </Badge>
+                  <span className="text-xs text-gray-500">Roles</span>
+                  <div className="flex flex-wrap gap-1">
+                    {(user.roles || (user.role ? [user.role] : [])).map((role) => (
+                      <Badge key={role} className={getRoleBadgeColor(role)}>
+                        {getRoleDisplayName(role)}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-500">Department</span>
@@ -215,9 +221,13 @@ const MembersTable = ({
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
-                      <Badge className={getRoleBadgeColor(user.role)}>
-                        {user.role}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1">
+                        {(user.roles || (user.role ? [user.role] : [])).map((role) => (
+                          <Badge key={role} className={getRoleBadgeColor(role)}>
+                            {getRoleDisplayName(role)}
+                          </Badge>
+                        ))}
+                      </div>
                     </TableCell>
                     <TableCell>{user.department || '—'}</TableCell>
                     <TableCell className="text-right">

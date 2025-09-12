@@ -1,6 +1,6 @@
 
 // Define user roles
-export type UserRole = 'admin' | 'manager' | 'head' | 'member';
+export type UserRole = 'admin' | 'head' | 'member';
 
 // Define the User interface
 export interface User {
@@ -8,7 +8,7 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
-  role: UserRole;
+  roles: UserRole[]; // Changed from single role to array of roles
   bio?: string;
   department?: string;
 }

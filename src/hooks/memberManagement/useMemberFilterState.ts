@@ -7,7 +7,6 @@ export const useMemberFilterState = (users: User[]): UseMemberFilterState => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoles, setSelectedRoles] = useState<Record<UserRole, boolean>>({
     admin: false,
-    manager: false,
     head: false,
     member: false,
   });
@@ -32,7 +31,10 @@ export const useMemberFilterState = (users: User[]): UseMemberFilterState => {
       
       // Role filter - if no roles selected, show all
       const noRolesSelected = !Object.values(selectedRoles).some(Boolean);
-      const matchesRole = noRolesSelected || selectedRoles[user.role];
+      
+      // Check if user has any of the selected roles
+      const userRoles = user.roles || (user.role ? [user.role] : []);
+      const matchesRole = noRolesSelected || userRoles.some(role => selectedRoles[role]);
       
       return matchesSearch && matchesRole;
     });

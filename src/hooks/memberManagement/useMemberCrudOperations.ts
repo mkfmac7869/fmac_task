@@ -19,9 +19,19 @@ export const useMemberCrudOperations = (
     setIsCrudSubmitting(true);
     
     try {
+      // Ensure at least one role is selected
+      if (!data.roles || data.roles.length === 0) {
+        toast({
+          title: 'Error',
+          description: 'Please select at least one role',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       // Force admin role for special emails
       if (data.email === 'mk7869148e@gmail.com' || data.email === 'mkfmac7@gmail.com') {
-        data.role = 'admin';
+        data.roles = ['admin'];
         data.department = data.department || 'Management';
       }
 
@@ -29,7 +39,7 @@ export const useMemberCrudOperations = (
         // Update existing user
         await FirebaseService.updateDocument('profiles', userToEdit.id, {
           name: data.name,
-          role: data.role,
+          roles: data.roles,
           department: data.department
         });
 
@@ -37,7 +47,7 @@ export const useMemberCrudOperations = (
         setUsers(prev => 
           prev.map(user => 
             user.id === userToEdit.id
-              ? { ...user, name: data.name, role: data.role, department: data.department }
+              ? { ...user, name: data.name, roles: data.roles, department: data.department }
               : user
           )
         );
@@ -54,7 +64,7 @@ export const useMemberCrudOperations = (
           id: newUserId,
           email: data.email,
           name: data.name,
-          role: data.role,
+          roles: data.roles,
           department: data.department,
           avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=42d1f5&color=fff`
         });
@@ -64,7 +74,7 @@ export const useMemberCrudOperations = (
           id: newUserId,
           email: data.email,
           name: data.name,
-          role: data.role,
+          roles: data.roles,
           department: data.department,
           avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=42d1f5&color=fff`
         };
@@ -137,13 +147,19 @@ export const useMemberCrudOperations = (
       const profiles = await FirebaseService.getDocuments('profiles');
       
       for (const profile of profiles) {
-        if (adminEmails.includes(profile.email) && profile.role !== 'admin') {
-          await FirebaseService.updateDocument('profiles', profile.id, {
-            role: 'admin',
-            department: 'Management'
-          });
+        if (adminEmails.includes(profile.email)) {
+          // Check if user has roles array or old role field
+          const currentRoles = profile.roles || (profile.role ? [profile.role] : []);
           
-          console.log(`Updated admin role for ${profile.email}`);
+          if (!currentRoles.includes('admin')) {
+            const updatedRoles = [...currentRoles, 'admin'];
+            await FirebaseService.updateDocument('profiles', profile.id, {
+              roles: updatedRoles,
+              department: 'Management'
+            });
+            
+            console.log(`Updated admin role for ${profile.email}`);
+          }
         }
       }
       

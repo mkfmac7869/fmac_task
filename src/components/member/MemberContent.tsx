@@ -20,6 +20,7 @@ interface MemberContentProps {
   handleDeleteUser: (userId: string) => void;
   handleAddNewUser: () => void;
   getRoleBadgeColor: (role: UserRole) => string;
+  getRoleDisplayName: (role: UserRole) => string;
 }
 
 const MemberContent = ({
@@ -35,6 +36,7 @@ const MemberContent = ({
   handleDeleteUser,
   handleAddNewUser,
   getRoleBadgeColor,
+  getRoleDisplayName,
 }: MemberContentProps) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -88,6 +90,7 @@ const MemberContent = ({
         onDeleteUser={handleDeleteUser}
         onAddUser={handleAddNewUser}
         getRoleBadgeColor={getRoleBadgeColor}
+        getRoleDisplayName={getRoleDisplayName}
         isLoading={isLoading}
       />
     </div>

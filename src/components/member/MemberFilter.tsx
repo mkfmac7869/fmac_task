@@ -33,7 +33,7 @@ const MemberFilter = ({
           </div>
           <div className="flex flex-wrap gap-2">
             <span className="text-sm font-medium text-gray-700 self-center mr-2">Filter by role:</span>
-            {(['admin', 'manager', 'head', 'member'] as UserRole[]).map((role) => (
+            {(['admin', 'head', 'member'] as UserRole[]).map((role) => (
               <div key={role} className="flex items-center space-x-2">
                 <Checkbox 
                   id={`role-${role}`}

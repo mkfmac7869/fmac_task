@@ -25,6 +25,7 @@ const MemberManagement = () => {
     handleEditUser,
     handleDeleteUser,
     getRoleBadgeColor,
+    getRoleDisplayName,
     onSubmit,
     isCrudSubmitting,
     fetchUsers
@@ -103,6 +104,7 @@ const MemberManagement = () => {
           handleDeleteUser={handleDeleteUser}
           handleAddNewUser={handleAddNewUser}
           getRoleBadgeColor={getRoleBadgeColor}
+          getRoleDisplayName={getRoleDisplayName}
         />
         
         {/* Form Dialog Component */}
