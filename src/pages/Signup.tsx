@@ -1,19 +1,53 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { FirebaseService } from '@/lib/firebaseService';
+
+interface Department {
+  id: string;
+  name: string;
+}
 
 const Signup = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [department, setDepartment] = useState('');
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
+
+  // Fetch departments on component mount
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const data = await FirebaseService.getDocuments('departments');
+        if (data && data.length > 0) {
+          const formattedDepartments = data.map(dept => ({
+            id: dept.id,
+            name: dept.name
+          }));
+          setDepartments(formattedDepartments);
+        }
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+        toast({
+          title: 'Error',
+          description: 'Could not load departments. Please try again.',
+          variant: 'destructive'
+        });
+      }
+    };
+    
+    fetchDepartments();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,14 +60,23 @@ const Signup = () => {
       });
       return;
     }
+
+    if (!department) {
+      toast({
+        title: "Error",
+        description: "Please select a department",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsLoading(true);
     
     try {
-      await signup(email, password, name);
+      await signup(email, password, name, department);
       toast({
         title: "Success",
-        description: "Your account has been created successfully.",
+        description: "Your account has been created successfully. Please wait for approval from your department head or admin.",
       });
     } catch (error: any) {
       toast({
@@ -118,6 +161,29 @@ const Signup = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                 />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="department" className="text-sm font-medium">
+                  Department
+                </label>
+                <Select value={department} onValueChange={setDepartment} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.length > 0 ? (
+                      departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.name}>
+                          {dept.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="loading" disabled>
+                        Loading departments...
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex items-center space-x-2">
                 <Input type="checkbox" id="terms" className="h-4 w-4" required />

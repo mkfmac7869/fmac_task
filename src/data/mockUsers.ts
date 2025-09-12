@@ -9,34 +9,37 @@ export const mockUsers = [
     password: 'password',
     name: 'Admin User',
     avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ea384c&color=fff',
-    role: 'admin' as UserRole,
-    department: 'Management'
+    roles: ['admin'] as UserRole[],
+    department: 'Management',
+    isApproved: true,
+    approvedBy: '1',
+    approvedAt: new Date(),
+    createdAt: new Date()
   },
   {
     id: '2',
-    email: 'manager@fmac.com',
-    password: 'password',
-    name: 'General Manager',
-    avatar: 'https://ui-avatars.com/api/?name=General+Manager&background=4287f5&color=fff',
-    role: 'manager' as UserRole,
-    department: 'Operations'
-  },
-  {
-    id: '3',
     email: 'head@fmac.com',
     password: 'password',
     name: 'Department Head',
     avatar: 'https://ui-avatars.com/api/?name=Department+Head&background=42f54b&color=fff',
-    role: 'head' as UserRole,
-    department: 'Engineering'
+    roles: ['head'] as UserRole[],
+    department: 'Engineering',
+    isApproved: true,
+    approvedBy: '1',
+    approvedAt: new Date(),
+    createdAt: new Date()
   },
   {
-    id: '4',
+    id: '3',
     email: 'member@fmac.com',
     password: 'password',
     name: 'Team Member',
     avatar: 'https://ui-avatars.com/api/?name=Team+Member&background=f5a442&color=fff',
-    role: 'member' as UserRole,
-    department: 'Marketing'
+    roles: ['member'] as UserRole[],
+    department: 'Marketing',
+    isApproved: true,
+    approvedBy: '2',
+    approvedAt: new Date(),
+    createdAt: new Date()
   }
 ];
