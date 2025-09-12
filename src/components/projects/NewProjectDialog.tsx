@@ -6,15 +6,25 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PlusCircle, X, Users } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { FirebaseService } from '@/lib/firebaseService';
+import { useTeamMembers } from '@/hooks/team/useTeamMembers';
 
 interface ProjectFormData {
   name: string;
   description: string;
   color: string;
   departmentId: string | null;
+  members: {
+    id: string;
+    name: string;
+    avatar: string;
+    email?: string;
+  }[];
 }
 
 interface Department {
@@ -34,15 +44,18 @@ const COLORS = [
 
 const NewProjectDialog = () => {
   const { addProject } = useTask();
+  const { membersList } = useTeamMembers();
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
     description: '',
     color: 'blue',
     departmentId: null,
+    members: [],
   });
   const [isOpen, setIsOpen] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showMemberSelector, setShowMemberSelector] = useState(false);
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -85,6 +98,35 @@ const NewProjectDialog = () => {
     }
   };
 
+  const handleMemberToggle = (member: any) => {
+    setFormData(prev => {
+      const isSelected = prev.members.some(m => m.id === member.id);
+      if (isSelected) {
+        return {
+          ...prev,
+          members: prev.members.filter(m => m.id !== member.id)
+        };
+      } else {
+        return {
+          ...prev,
+          members: [...prev.members, {
+            id: member.id,
+            name: member.name,
+            avatar: member.avatar,
+            email: member.email
+          }]
+        };
+      }
+    });
+  };
+
+  const removeMember = (memberId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      members: prev.members.filter(m => m.id !== memberId)
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -105,7 +147,7 @@ const NewProjectDialog = () => {
         description: formData.description,
         color: formData.color,
         departmentId: formData.departmentId,
-        members: []
+        members: formData.members
       });
       
       toast({
@@ -118,6 +160,7 @@ const NewProjectDialog = () => {
         description: '',
         color: 'blue',
         departmentId: null,
+        members: [],
       });
       setIsOpen(false);
     } catch (error) {
@@ -221,6 +264,78 @@ const NewProjectDialog = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            
+            {/* Team Members Selection */}
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Team Members</label>
+              
+              {/* Selected Members Display */}
+              {formData.members.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {formData.members.map((member) => (
+                    <Badge key={member.id} variant="secondary" className="flex items-center gap-2 px-3 py-1">
+                      <Avatar className="h-4 w-4">
+                        <AvatarImage src={member.avatar} alt={member.name} />
+                        <AvatarFallback className="text-xs">{member.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">{member.name}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => removeMember(member.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              
+              {/* Add Members Button */}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowMemberSelector(!showMemberSelector)}
+                className="flex items-center gap-2"
+              >
+                <Users className="h-4 w-4" />
+                {formData.members.length > 0 ? 'Add More Members' : 'Add Team Members'}
+              </Button>
+              
+              {/* Member Selection Dropdown */}
+              {showMemberSelector && (
+                <div className="border rounded-lg p-3 max-h-48 overflow-y-auto">
+                  <div className="space-y-2">
+                    {membersList.length > 0 ? (
+                      membersList.map((member) => {
+                        const isSelected = formData.members.some(m => m.id === member.id);
+                        return (
+                          <div key={member.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded">
+                            <Checkbox
+                              id={`member-${member.id}`}
+                              checked={isSelected}
+                              onCheckedChange={() => handleMemberToggle(member)}
+                            />
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={member.avatar} alt={member.name} />
+                              <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900">{member.name}</p>
+                              <p className="text-sm text-gray-500">{member.email}</p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center py-4">No team members available</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
