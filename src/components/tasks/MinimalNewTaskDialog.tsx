@@ -1,27 +1,124 @@
-import React, { useState } from 'react';
-import { X, Calendar, User } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Calendar, User, ChevronDown, Check } from 'lucide-react';
 import { useTask } from '@/context/TaskContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { TaskStatus, TaskPriority } from '@/types/task';
 import { format } from 'date-fns';
+import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
 
 interface MinimalNewTaskDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+// Custom Dropdown Component
+interface CustomDropdownProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{value: string; label: string; icon?: React.ReactNode; color?: string; bgColor?: string}>;
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
+}
+
+const CustomDropdown: React.FC<CustomDropdownProps> = ({ 
+  value, 
+  onChange, 
+  options, 
+  placeholder = "Select...",
+  disabled = false,
+  className = ""
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
+  const selectedOption = options.find(opt => opt.value === value);
+  
+  return (
+    <div className={`relative ${className}`} ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`w-full px-3 py-2 text-left border rounded-md flex items-center justify-between transition-all duration-200 ${
+          disabled 
+            ? 'bg-gray-50 border-gray-200 cursor-not-allowed' 
+            : 'bg-white border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500'
+        }`}
+        disabled={disabled}
+      >
+        <span className="flex items-center gap-2">
+          {selectedOption ? (
+            <>
+              {selectedOption.icon}
+              <span className={selectedOption.color || ''}>{selectedOption.label}</span>
+            </>
+          ) : (
+            <span className="text-gray-500">{placeholder}</span>
+          )}
+        </span>
+        <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+              className={`w-full px-3 py-2 text-left flex items-center justify-between hover:bg-gray-50 transition-colors duration-150 ${
+                value === option.value ? 'bg-gray-50' : ''
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                {option.icon}
+                <span className={option.color || ''}>{option.label}</span>
+              </span>
+              {value === option.value && <Check className="h-4 w-4 text-red-600" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onOpenChange }) => {
   const { addTask, projects } = useTask();
   const { user } = useAuth();
+  const { users, isLoading: isLoadingUsers } = useFetchMembers();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
   const [status, setStatus] = useState<TaskStatus>(TaskStatus.TODO);
   const [projectId, setProjectId] = useState('');
   const [dueDate, setDueDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [assignToSelf, setAssignToSelf] = useState(false);
+  const [assigneeId, setAssigneeId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isAdmin = user?.roles?.includes('admin') || false;
+
+  // Reset assigneeId when dialog opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setAssigneeId('');
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -40,12 +137,19 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
     setIsSubmitting(true);
     
     try {
-      const assignee = assignToSelf && user ? {
-        id: user.id,
-        name: user.name,
-        avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`,
-        email: user.email
-      } : null;
+      let assignee = null;
+      
+      if (assigneeId) {
+        const selectedUser = users.find(u => u.id === assigneeId);
+        if (selectedUser) {
+          assignee = {
+            id: selectedUser.id,
+            name: selectedUser.name,
+            avatar: selectedUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}`,
+            email: selectedUser.email
+          };
+        }
+      }
 
       const newTask = {
         title: title.trim(),
@@ -92,12 +196,28 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
     setStatus(TaskStatus.TODO);
     setProjectId('');
     setDueDate(format(new Date(), 'yyyy-MM-dd'));
-    setAssignToSelf(false);
+    setAssigneeId('');
   };
 
   const handleClose = () => {
     resetForm();
     onOpenChange(false);
+  };
+
+  // Priority colors
+  const priorityConfig = {
+    [TaskPriority.URGENT]: { label: 'Urgent', color: 'bg-red-500', textColor: 'text-red-700', bgLight: 'bg-red-50' },
+    [TaskPriority.HIGH]: { label: 'High', color: 'bg-yellow-500', textColor: 'text-yellow-700', bgLight: 'bg-yellow-50' },
+    [TaskPriority.MEDIUM]: { label: 'Medium', color: 'bg-blue-500', textColor: 'text-blue-700', bgLight: 'bg-blue-50' },
+    [TaskPriority.LOW]: { label: 'Low', color: 'bg-gray-500', textColor: 'text-gray-700', bgLight: 'bg-gray-50' }
+  };
+
+  // Status colors
+  const statusConfig = {
+    [TaskStatus.TODO]: { label: 'To Do', color: 'bg-gray-500', textColor: 'text-gray-700', bgLight: 'bg-gray-50' },
+    [TaskStatus.IN_PROGRESS]: { label: 'In Progress', color: 'bg-blue-500', textColor: 'text-blue-700', bgLight: 'bg-blue-50' },
+    [TaskStatus.IN_REVIEW]: { label: 'In Review', color: 'bg-yellow-500', textColor: 'text-yellow-700', bgLight: 'bg-yellow-50' },
+    [TaskStatus.COMPLETED]: { label: 'Completed', color: 'bg-green-500', textColor: 'text-green-700', bgLight: 'bg-green-50' }
   };
 
   return (
@@ -161,39 +281,77 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
             {/* Priority and Status */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Priority
                 </label>
-                <select
-                  id="priority"
+                <CustomDropdown
                   value={priority}
-                  onChange={(e) => setPriority(e.target.value as TaskPriority)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  onChange={(value) => setPriority(value as TaskPriority)}
                   disabled={isSubmitting}
-                >
-                  <option value={TaskPriority.URGENT}>Urgent</option>
-                  <option value={TaskPriority.HIGH}>High</option>
-                  <option value={TaskPriority.MEDIUM}>Medium</option>
-                  <option value={TaskPriority.LOW}>Low</option>
-                </select>
+                  options={[
+                    { 
+                      value: TaskPriority.URGENT, 
+                      label: priorityConfig[TaskPriority.URGENT].label,
+                      icon: <div className={`w-3 h-3 rounded-full ${priorityConfig[TaskPriority.URGENT].color}`} />,
+                      color: priorityConfig[TaskPriority.URGENT].textColor
+                    },
+                    { 
+                      value: TaskPriority.HIGH, 
+                      label: priorityConfig[TaskPriority.HIGH].label,
+                      icon: <div className={`w-3 h-3 rounded-full ${priorityConfig[TaskPriority.HIGH].color}`} />,
+                      color: priorityConfig[TaskPriority.HIGH].textColor
+                    },
+                    { 
+                      value: TaskPriority.MEDIUM, 
+                      label: priorityConfig[TaskPriority.MEDIUM].label,
+                      icon: <div className={`w-3 h-3 rounded-full ${priorityConfig[TaskPriority.MEDIUM].color}`} />,
+                      color: priorityConfig[TaskPriority.MEDIUM].textColor
+                    },
+                    { 
+                      value: TaskPriority.LOW, 
+                      label: priorityConfig[TaskPriority.LOW].label,
+                      icon: <div className={`w-3 h-3 rounded-full ${priorityConfig[TaskPriority.LOW].color}`} />,
+                      color: priorityConfig[TaskPriority.LOW].textColor
+                    }
+                  ]}
+                />
               </div>
               
               <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Status
                 </label>
-                <select
-                  id="status"
+                <CustomDropdown
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  onChange={(value) => setStatus(value as TaskStatus)}
                   disabled={isSubmitting}
-                >
-                  <option value={TaskStatus.TODO}>To Do</option>
-                  <option value={TaskStatus.IN_PROGRESS}>In Progress</option>
-                  <option value={TaskStatus.IN_REVIEW}>In Review</option>
-                  <option value={TaskStatus.COMPLETED}>Completed</option>
-                </select>
+                  options={[
+                    { 
+                      value: TaskStatus.TODO, 
+                      label: statusConfig[TaskStatus.TODO].label,
+                      icon: <div className={`w-3 h-3 rounded-full ${statusConfig[TaskStatus.TODO].color}`} />,
+                      color: statusConfig[TaskStatus.TODO].textColor
+                    },
+                    { 
+                      value: TaskStatus.IN_PROGRESS, 
+                      label: statusConfig[TaskStatus.IN_PROGRESS].label,
+                      icon: <div className={`w-3 h-3 rounded-full ${statusConfig[TaskStatus.IN_PROGRESS].color}`} />,
+                      color: statusConfig[TaskStatus.IN_PROGRESS].textColor
+                    },
+                    { 
+                      value: TaskStatus.IN_REVIEW, 
+                      label: statusConfig[TaskStatus.IN_REVIEW].label,
+                      icon: <div className={`w-3 h-3 rounded-full ${statusConfig[TaskStatus.IN_REVIEW].color}`} />,
+                      color: statusConfig[TaskStatus.IN_REVIEW].textColor
+                    },
+                    { 
+                      value: TaskStatus.COMPLETED, 
+                      label: statusConfig[TaskStatus.COMPLETED].label,
+                      icon: <div className={`w-3 h-3 rounded-full ${statusConfig[TaskStatus.COMPLETED].color}`} />,
+                      color: statusConfig[TaskStatus.COMPLETED].textColor
+                    }
+                  ]}
+                />
               </div>
             </div>
             
@@ -217,23 +375,23 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
               </div>
               
               <div>
-                <label htmlFor="project" className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Project
                 </label>
-                <select
-                  id="project"
+                <CustomDropdown
                   value={projectId}
-                  onChange={(e) => setProjectId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  onChange={setProjectId}
                   disabled={isSubmitting}
-                >
-                  <option value="">No Project</option>
-                  {projects?.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select project"
+                  options={[
+                    { value: '', label: 'No Project' },
+                    ...(projects?.map((project) => ({
+                      value: project.id,
+                      label: project.name,
+                      icon: <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: project.color }} />
+                    })) || [])
+                  ]}
+                />
               </div>
             </div>
             
@@ -242,20 +400,43 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Assignee
               </label>
-              <div className="flex items-center">
-                <input
-                  id="assign-to-self"
-                  type="checkbox"
-                  checked={assignToSelf}
-                  onChange={(e) => setAssignToSelf(e.target.checked)}
-                  className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                  disabled={isSubmitting}
+              {isAdmin ? (
+                <CustomDropdown
+                  value={assigneeId}
+                  onChange={setAssigneeId}
+                  disabled={isSubmitting || isLoadingUsers}
+                  placeholder={isLoadingUsers ? "Loading users..." : "Select assignee"}
+                  options={[
+                    { value: '', label: 'Unassigned', icon: <User className="h-4 w-4 text-gray-400" /> },
+                    ...(users?.map((user) => ({
+                      value: user.id,
+                      label: user.name,
+                      icon: (
+                        <img 
+                          src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`} 
+                          alt={user.name}
+                          className="w-5 h-5 rounded-full"
+                        />
+                      )
+                    })) || [])
+                  ]}
                 />
-                <label htmlFor="assign-to-self" className="ml-2 text-sm text-gray-700 flex items-center">
-                  <User className="h-4 w-4 mr-1" />
-                  Assign to me
-                </label>
-              </div>
+              ) : (
+                <div className="flex items-center p-2 bg-gray-50 rounded-md">
+                  <input
+                    id="assign-to-self"
+                    type="checkbox"
+                    checked={assigneeId === user?.id}
+                    onChange={(e) => setAssigneeId(e.target.checked ? user?.id || '' : '')}
+                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    disabled={isSubmitting}
+                  />
+                  <label htmlFor="assign-to-self" className="ml-2 text-sm text-gray-700 flex items-center">
+                    <User className="h-4 w-4 mr-1" />
+                    Assign to me
+                  </label>
+                </div>
+              )}
             </div>
             
             {/* Submit Buttons */}
