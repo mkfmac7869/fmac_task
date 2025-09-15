@@ -99,6 +99,8 @@ const ClickUpTaskPanel = ({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const isAdmin = user?.roles?.includes('admin') || false;
 
   // Initialize state when task changes
   useEffect(() => {
@@ -344,61 +346,130 @@ const ClickUpTaskPanel = ({
             {/* Assignee */}
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500 w-24">Assignee</span>
-              {/* Allow users to assign/unassign tasks to themselves only */}
-              {task.assignee?.id === user?.id ? (
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-7 w-7">
-                    <AvatarImage src={task.assignee.avatar} />
-                    <AvatarFallback>{task.assignee.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm">{task.assignee.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 ml-2"
-                    onClick={() => {
+              {isAdmin ? (
+                // Admin can select any user
+                <Select
+                  value={task.assignee?.id || 'unassigned'}
+                  onValueChange={(value) => {
+                    if (value === 'unassigned') {
                       onUpdateTask(task.id, { assignee: null });
                       toast({
                         title: "Task Updated",
-                        description: "You have unassigned yourself from this task",
+                        description: "Assignee removed",
                       });
-                    }}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ) : task.assignee ? (
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-7 w-7">
-                    <AvatarImage src={task.assignee.avatar} />
-                    <AvatarFallback>{task.assignee.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm">{task.assignee.name}</span>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8"
-                  onClick={() => {
-                    if (user) {
-                      const assignee = {
-                        id: user.id,
-                        name: user.name,
-                        avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`,
-                        email: user.email
-                      };
-                      onUpdateTask(task.id, { assignee });
-                      toast({
-                        title: "Task Updated",
-                        description: "You have assigned yourself to this task",
-                      });
+                    } else {
+                      const selectedUser = users.find(u => u.id === value);
+                      if (selectedUser) {
+                        const assignee = {
+                          id: selectedUser.id,
+                          name: selectedUser.name,
+                          avatar: selectedUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}`,
+                          email: selectedUser.email
+                        };
+                        onUpdateTask(task.id, { assignee });
+                        toast({
+                          title: "Task Updated",
+                          description: `Task assigned to ${selectedUser.name}`,
+                        });
+                      }
                     }
                   }}
+                  disabled={isLoadingMembers}
                 >
-                  <User className="h-3.5 w-3.5 mr-2" />
-                  Assign to me
-                </Button>
+                  <SelectTrigger className="h-8 w-[180px]">
+                    <SelectValue>
+                      {task.assignee ? (
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-5 w-5">
+                            <AvatarImage src={task.assignee.avatar} />
+                            <AvatarFallback>{task.assignee.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm">{task.assignee.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-500">Unassigned</span>
+                      )}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-400" />
+                        <span>Unassigned</span>
+                      </div>
+                    </SelectItem>
+                    {users?.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-5 w-5">
+                            <AvatarImage src={member.avatar} />
+                            <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span>{member.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                // Non-admin users can only assign/unassign themselves
+                <>
+                  {task.assignee?.id === user?.id ? (
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-7 w-7">
+                        <AvatarImage src={task.assignee.avatar} />
+                        <AvatarFallback>{task.assignee.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">{task.assignee.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 ml-2"
+                        onClick={() => {
+                          onUpdateTask(task.id, { assignee: null });
+                          toast({
+                            title: "Task Updated",
+                            description: "You have unassigned yourself from this task",
+                          });
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : task.assignee ? (
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-7 w-7">
+                        <AvatarImage src={task.assignee.avatar} />
+                        <AvatarFallback>{task.assignee.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">{task.assignee.name}</span>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8"
+                      onClick={() => {
+                        if (user) {
+                          const assignee = {
+                            id: user.id,
+                            name: user.name,
+                            avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`,
+                            email: user.email
+                          };
+                          onUpdateTask(task.id, { assignee });
+                          toast({
+                            title: "Task Updated",
+                            description: "You have assigned yourself to this task",
+                          });
+                        }
+                      }}
+                    >
+                      <User className="h-3.5 w-3.5 mr-2" />
+                      Assign to me
+                    </Button>
+                  )}
+                </>
               )}
             </div>
 
