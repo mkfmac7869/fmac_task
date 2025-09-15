@@ -30,11 +30,18 @@ const SimpleNewTaskDialog = ({ isOpen, onOpenChange }: SimpleNewTaskDialogProps)
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [projectId, setProjectId] = useState(projects[0]?.id || '');
+  const [projectId, setProjectId] = useState('');
   const [status, setStatus] = useState<TaskStatus>(TaskStatus.TODO);
   const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
   const [dueDate, setDueDate] = useState<Date | undefined>(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
   const [assigneeId, setAssigneeId] = useState<string>('');
+
+  // Initialize projectId when projects are loaded
+  React.useEffect(() => {
+    if (projects.length > 0 && !projectId) {
+      setProjectId(projects[0].id);
+    }
+  }, [projects, projectId]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +112,7 @@ const SimpleNewTaskDialog = ({ isOpen, onOpenChange }: SimpleNewTaskDialogProps)
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
         </DialogHeader>
@@ -144,17 +151,26 @@ const SimpleNewTaskDialog = ({ isOpen, onOpenChange }: SimpleNewTaskDialogProps)
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
                 <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded" 
-                          style={{ backgroundColor: project.color }}
-                        />
-                        <span>{project.name}</span>
-                      </div>
+                  <SelectItem value="">
+                    <span className="text-gray-500">No project</span>
+                  </SelectItem>
+                  {projects && projects.length > 0 ? (
+                    projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded" 
+                            style={{ backgroundColor: project.color || '#ccc' }}
+                          />
+                          <span>{project.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-projects" disabled>
+                      <span className="text-gray-400">No projects available</span>
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -240,18 +256,22 @@ const SimpleNewTaskDialog = ({ isOpen, onOpenChange }: SimpleNewTaskDialogProps)
                       <span>Loading members...</span>
                     </div>
                   </SelectItem>
-                ) : (
+                ) : users && users.length > 0 ? (
                   users.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={member.avatar} />
-                          <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                          <AvatarFallback>{member.name?.charAt(0) || 'U'}</AvatarFallback>
                         </Avatar>
-                        <span>{member.name}</span>
+                        <span>{member.name || 'Unknown User'}</span>
                       </div>
                     </SelectItem>
                   ))
+                ) : (
+                  <SelectItem value="no-members" disabled>
+                    <span className="text-gray-400">No members available</span>
+                  </SelectItem>
                 )}
               </SelectContent>
             </Select>
