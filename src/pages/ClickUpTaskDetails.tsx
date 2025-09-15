@@ -28,7 +28,8 @@ import {
   ListChecks,
   CheckSquare,
   Square,
-  X
+  X,
+  TrendingUp
 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { useTask } from '@/context/TaskContext';
@@ -161,17 +162,40 @@ const ClickUpTaskDetails = () => {
         createdAt: c.createdAt?.toDate() || new Date()
       })));
 
-      // Initialize with sample activity
-      const initialActivity: Activity = {
-        id: '1',
-        type: 'status_change',
-        userId: task?.creator?.id || '',
-        userName: task?.creator?.name || 'System',
-        userAvatar: task?.creator?.avatar || '/placeholder.svg',
-        description: 'created this task',
-        timestamp: new Date(task?.createdAt || Date.now())
-      };
-      setActivities([initialActivity]);
+      // Load activities from Firebase
+      const activitiesData = await FirebaseService.getDocumentsOrdered(
+        'activities',
+        'timestamp',
+        'asc',
+        [{ field: 'taskId', operator: '==', value: taskId }]
+      );
+      
+      if (activitiesData && activitiesData.length > 0) {
+        setActivities(activitiesData.map((a: any) => ({
+          ...a,
+          timestamp: a.timestamp?.toDate() || new Date()
+        })));
+      } else {
+        // If no activities exist, create the initial "created" activity
+        const createdActivity: Activity = {
+          id: Date.now().toString(),
+          type: 'status_change',
+          userId: task?.creator?.id || 'system',
+          userName: task?.creator?.name || 'System',
+          userAvatar: task?.creator?.avatar || '/placeholder.svg',
+          description: 'created this task',
+          timestamp: new Date(task?.createdAt || Date.now())
+        };
+        
+        // Save the initial activity
+        await FirebaseService.addDocument('activities', {
+          ...createdActivity,
+          taskId: taskId,
+          timestamp: createdActivity.timestamp
+        });
+        
+        setActivities([createdActivity]);
+      }
     } catch (error) {
       console.error('Error loading task data:', error);
     }
@@ -196,25 +220,25 @@ const ClickUpTaskDetails = () => {
   const StatusIcon = currentStatus?.icon || Circle;
 
   // Handlers
-  const handleTitleSubmit = () => {
+  const handleTitleSubmit = async () => {
     if (editedTitle.trim() && editedTitle !== task.title) {
       updateTask(task.id, { title: editedTitle });
-      addActivity('status_change', `changed title from "${task.title}" to "${editedTitle}"`);
+      await addActivity('status_change', `changed title from "${task.title}" to "${editedTitle}"`, task.title, editedTitle);
     }
     setIsEditingTitle(false);
   };
 
-  const handleDescriptionSubmit = () => {
+  const handleDescriptionSubmit = async () => {
     if (editedDescription !== task.description) {
       updateTask(task.id, { description: editedDescription });
-      addActivity('status_change', 'updated the description');
+      await addActivity('status_change', 'updated the description');
     }
     setIsEditingDescription(false);
   };
 
-  const handleProgressSubmit = () => {
+  const handleProgressSubmit = async () => {
     updateTask(task.id, { progress: tempProgress });
-    addActivity('progress', `updated progress from ${task.progress}% to ${tempProgress}%`);
+    await addActivity('progress', `updated progress from ${task.progress}% to ${tempProgress}%`, task.progress.toString(), tempProgress.toString());
     setIsEditingProgress(false);
     toast({
       title: "Progress Updated",
@@ -222,21 +246,23 @@ const ClickUpTaskDetails = () => {
     });
   };
 
-  const handleStatusChange = (newStatus: TaskStatus) => {
+  const handleStatusChange = async (newStatus: TaskStatus) => {
     updateTask(task.id, { status: newStatus });
     const oldStatus = statusOptions.find(s => s.value === task.status)?.label;
     const newStatusLabel = statusOptions.find(s => s.value === newStatus)?.label;
-    addActivity('status_change', `changed status from ${oldStatus} to ${newStatusLabel}`);
+    await addActivity('status_change', `changed status from ${oldStatus} to ${newStatusLabel}`, task.status, newStatus);
   };
 
-  const handlePriorityChange = (newPriority: TaskPriority) => {
+  const handlePriorityChange = async (newPriority: TaskPriority) => {
     updateTask(task.id, { priority: newPriority });
     const oldPriority = priorityOptions.find(p => p.value === task.priority)?.label;
     const newPriorityLabel = priorityOptions.find(p => p.value === newPriority)?.label;
-    addActivity('status_change', `changed priority from ${oldPriority} to ${newPriorityLabel}`);
+    await addActivity('status_change', `changed priority from ${oldPriority} to ${newPriorityLabel}`, task.priority, newPriority);
   };
 
-  const addActivity = (type: Activity['type'], description: string) => {
+  const addActivity = async (type: Activity['type'], description: string, oldValue?: string, newValue?: string) => {
+    if (!task) return;
+    
     const activity: Activity = {
       id: Date.now().toString(),
       type,
@@ -244,9 +270,24 @@ const ClickUpTaskDetails = () => {
       userName: user?.name || 'Unknown User',
       userAvatar: user?.avatar || '/placeholder.svg',
       description,
+      oldValue,
+      newValue,
       timestamp: new Date()
     };
-    setActivities([...activities, activity]);
+    
+    try {
+      // Save to Firebase
+      await FirebaseService.addDocument('activities', {
+        ...activity,
+        taskId: task.id,
+        timestamp: activity.timestamp
+      });
+      
+      // Update local state
+      setActivities(prev => [...prev, activity]);
+    } catch (error) {
+      console.error('Error saving activity:', error);
+    }
   };
 
   const handleAddComment = async () => {
@@ -271,7 +312,7 @@ const ClickUpTaskDetails = () => {
         setComments(updatedComments);
         updateTask(task.id, { comments: updatedComments });
         setNewComment('');
-        addActivity('comment', 'added a comment');
+        await addActivity('comment', 'added a comment');
         toast({
           title: "Comment Added",
           description: "Your comment has been posted.",
@@ -371,7 +412,7 @@ const ClickUpTaskDetails = () => {
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
       const file = files[0];
@@ -389,7 +430,7 @@ const ClickUpTaskDetails = () => {
       if (task) {
         updateTask(task.id, { attachments: updatedAttachments });
       }
-      addActivity('attachment', `attached ${file.name}`);
+      await addActivity('attachment', `attached ${file.name}`);
       toast({
         title: "File Attached",
         description: `${file.name} has been attached to the task.`,
@@ -871,23 +912,76 @@ const ClickUpTaskDetails = () => {
 
                   <TabsContent value="activity" className="mt-4">
                     <div className="space-y-4">
-                      {activities.map((activity) => (
-                        <div key={activity.id} className="flex gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={activity.userAvatar} />
-                            <AvatarFallback>{activity.userName.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 text-sm">
-                              <span className="font-medium">{activity.userName}</span>
-                              <span className="text-gray-600">{activity.description}</span>
-                              <span className="text-xs text-gray-400">
-                                {format(activity.timestamp, 'MMM d, h:mm a')}
-                              </span>
+                      {activities.length > 0 ? (
+                        activities.map((activity) => {
+                          let icon = null;
+                          let iconColor = 'text-gray-400';
+                          
+                          switch (activity.type) {
+                            case 'status_change':
+                              icon = <Circle className="h-4 w-4" />;
+                              iconColor = 'text-blue-500';
+                              break;
+                            case 'assignment':
+                              icon = <User className="h-4 w-4" />;
+                              iconColor = 'text-purple-500';
+                              break;
+                            case 'progress':
+                              icon = <TrendingUp className="h-4 w-4" />;
+                              iconColor = 'text-green-500';
+                              break;
+                            case 'comment':
+                              icon = <MessageSquare className="h-4 w-4" />;
+                              iconColor = 'text-gray-500';
+                              break;
+                            case 'attachment':
+                              icon = <Paperclip className="h-4 w-4" />;
+                              iconColor = 'text-amber-500';
+                              break;
+                          }
+                          
+                          return (
+                            <div key={activity.id} className="flex gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                              <div className="relative">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={activity.userAvatar} />
+                                  <AvatarFallback>{activity.userName.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                {icon && (
+                                  <div className={cn(
+                                    "absolute -bottom-1 -right-1 p-1 bg-white rounded-full shadow-sm",
+                                    iconColor
+                                  )}>
+                                    {icon}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="text-sm">
+                                    <span className="font-medium text-gray-900">{activity.userName}</span>
+                                    <span className="text-gray-600 ml-1">{activity.description}</span>
+                                    {activity.oldValue && activity.newValue && (
+                                      <div className="mt-1 text-xs">
+                                        <span className="text-gray-500 line-through">{activity.oldValue}</span>
+                                        <span className="mx-2">→</span>
+                                        <span className="text-gray-700 font-medium">{activity.newValue}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <span className="text-xs text-gray-400 whitespace-nowrap">
+                                    {format(activity.timestamp, 'MMM d, h:mm a')}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      ))}
+                          );
+                        })
+                      ) : (
+                        <p className="text-sm text-gray-400 text-center py-8">
+                          No activity recorded yet.
+                        </p>
+                      )}
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -949,10 +1043,10 @@ const ClickUpTaskDetails = () => {
                       // Admin can select any user
                       <Select
                         value={task.assignee?.id || 'unassigned'}
-                        onValueChange={(value) => {
+                        onValueChange={async (value) => {
                           if (value === 'unassigned') {
                             updateTask(task.id, { assignee: null });
-                            addActivity('assignment', 'removed assignee');
+                            await addActivity('assignment', 'removed assignee');
                             toast({
                               title: "Task Updated",
                               description: "Assignee removed",
@@ -967,7 +1061,7 @@ const ClickUpTaskDetails = () => {
                                 email: selectedUser.email
                               };
                               updateTask(task.id, { assignee });
-                              addActivity('assignment', `assigned task to ${selectedUser.name}`);
+                              await addActivity('assignment', `assigned task to ${selectedUser.name}`);
                               toast({
                                 title: "Task Updated",
                                 description: `Task assigned to ${selectedUser.name}`,
@@ -1028,9 +1122,9 @@ const ClickUpTaskDetails = () => {
                               variant="ghost"
                               size="sm"
                               className="h-7 px-2"
-                              onClick={() => {
+                              onClick={async () => {
                                 updateTask(task.id, { assignee: null });
-                                addActivity('assignment', 'unassigned themselves from task');
+                                await addActivity('assignment', 'unassigned themselves from task');
                                 toast({
                                   title: "Task Updated",
                                   description: "You have unassigned yourself from this task",
@@ -1054,7 +1148,7 @@ const ClickUpTaskDetails = () => {
                           <Button
                             variant="outline"
                             className="w-full justify-start"
-                            onClick={() => {
+                            onClick={async () => {
                               if (user) {
                                 const assignee = {
                                   id: user.id,
@@ -1063,7 +1157,7 @@ const ClickUpTaskDetails = () => {
                                   email: user.email
                                 };
                                 updateTask(task.id, { assignee });
-                                addActivity('assignment', 'assigned themselves to task');
+                                await addActivity('assignment', 'assigned themselves to task');
                                 toast({
                                   title: "Task Updated",
                                   description: "You have assigned yourself to this task",
@@ -1207,10 +1301,10 @@ const ClickUpTaskDetails = () => {
                     <label className="text-sm text-gray-500 mb-1 block">Project</label>
                     <Select
                       value={task.projectId || 'no-project'}
-                      onValueChange={(value) => {
+                      onValueChange={async (value) => {
                         const projectId = value === 'no-project' ? null : value;
                         updateTask(task.id, { projectId });
-                        addActivity('status_change', projectId ? 
+                        await addActivity('status_change', projectId ? 
                           `assigned task to ${projects.find(p => p.id === projectId)?.name}` : 
                           'removed project assignment'
                         );
