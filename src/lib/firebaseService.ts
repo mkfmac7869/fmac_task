@@ -106,23 +106,16 @@ export class FirebaseService {
   }
 
   // Get documents with ordering
-  static async getDocumentsOrdered(collectionName: string, orderByField: string, orderDirection: 'asc' | 'desc' = 'desc', conditions?: any[], limitCount?: number) {
+  static async getDocumentsOrdered(collectionName: string, orderByField: string, orderDirection: 'asc' | 'desc' = 'desc', conditions?: any[]) {
     try {
       let q;
-      const queryConstraints = [];
       
       if (conditions && conditions.length > 0) {
         const whereConditions = conditions.map(condition => where(condition.field, condition.operator, condition.value));
-        queryConstraints.push(...whereConditions);
+        q = query(collection(db, collectionName), ...whereConditions, orderBy(orderByField, orderDirection));
+      } else {
+        q = query(collection(db, collectionName), orderBy(orderByField, orderDirection));
       }
-      
-      queryConstraints.push(orderBy(orderByField, orderDirection));
-      
-      if (limitCount) {
-        queryConstraints.push(limit(limitCount));
-      }
-      
-      q = query(collection(db, collectionName), ...queryConstraints);
       
       const querySnapshot = await getDocs(q);
       const documents: any[] = [];
@@ -227,28 +220,9 @@ export class FirebaseService {
   // Upload file to Firebase Storage
   static async uploadFile(file: File, path: string): Promise<string> {
     try {
-      // Check if user is authenticated
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        throw new Error('User must be authenticated to upload files');
-      }
-      
-      console.log('Uploading file:', file.name, 'to path:', path);
-      console.log('Current user:', currentUser.uid);
-      
       const storageRef = ref(storage, path);
-      const metadata = {
-        contentType: file.type,
-        customMetadata: {
-          uploadedBy: currentUser.uid,
-          uploadedAt: new Date().toISOString()
-        }
-      };
-      
-      const snapshot = await uploadBytes(storageRef, file, metadata);
+      const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
-      
-      console.log('File uploaded successfully, URL:', downloadURL);
       return downloadURL;
     } catch (error) {
       console.error('Error uploading file:', error);
