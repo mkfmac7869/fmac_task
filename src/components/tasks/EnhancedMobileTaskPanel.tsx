@@ -826,8 +826,8 @@ const EnhancedMobileTaskPanel = ({
             </div>
           ) : (
             /* Activity Tab */
-            <div className="flex flex-col h-full">
-              <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex flex-col h-full min-h-0">
+              <div className="flex-1 overflow-y-auto p-4 min-h-0">
                 {comments.length > 0 ? (
                   <div className="space-y-4">
                     {comments.map((comment) => (
@@ -864,7 +864,7 @@ const EnhancedMobileTaskPanel = ({
               </div>
 
               {/* Comment Input */}
-              <div className="bg-white border-t border-gray-200 p-4">
+              <div className="bg-white border-t border-gray-200 p-4 flex-shrink-0">
                 <div className="flex gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user?.avatar || '/placeholder.svg'} />

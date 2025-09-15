@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useTask } from '@/context/TaskContext';
 import { toast } from '@/hooks/use-toast';
-import EnhancedNewTaskDialog from '@/components/tasks/EnhancedNewTaskDialog';
+import SimpleNewTaskDialog from '@/components/tasks/SimpleNewTaskDialog';
 import EnhancedTaskHeader from '@/components/tasks/EnhancedTaskHeader';
 import ClickUpViewSwitcher, { ViewMode } from '@/components/tasks/ClickUpViewSwitcher';
 import ClickUpListView from '@/components/tasks/ClickUpListView';
@@ -120,7 +120,7 @@ const Tasks = () => {
           )}
           
           {/* New Task Dialog */}
-          <EnhancedNewTaskDialog 
+          <SimpleNewTaskDialog 
             isOpen={isNewTaskDialogOpen}
             onOpenChange={setIsNewTaskDialogOpen}
           />
@@ -152,7 +152,7 @@ const Tasks = () => {
           resetFilters={resetFilters}
           activeFilterCount={activeFilterCount}
         />
-        <EnhancedNewTaskDialog 
+        <SimpleNewTaskDialog 
           isOpen={isNewTaskDialogOpen}
           onOpenChange={setIsNewTaskDialogOpen}
         />

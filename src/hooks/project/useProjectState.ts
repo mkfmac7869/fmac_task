@@ -20,10 +20,11 @@ export const useProjectState = () => {
       
       try {
         setIsLoading(true);
-        console.log("Fetching projects with user role:", user.role);
+        const isAdmin = user.roles?.includes('admin') || user.role === 'admin';
+        console.log("Fetching projects with user roles:", user.roles, "isAdmin:", isAdmin);
         
         // Fetch projects using Firebase service
-        const data = await ProjectService.getProjects(user.id, user.role, user.department);
+        const data = await ProjectService.getProjects(user.id, isAdmin ? 'admin' : 'member', user.department);
         
         if (data && data.length > 0) {
           console.log("Projects data fetched:", data);
