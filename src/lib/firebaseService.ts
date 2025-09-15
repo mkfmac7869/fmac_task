@@ -17,8 +17,13 @@ import {
   serverTimestamp,
   writeBatch
 } from 'firebase/firestore';
-import { db } from './firebaseClient';
-import { auth } from './firebaseClient';
+import { 
+  ref, 
+  uploadBytes, 
+  getDownloadURL, 
+  deleteObject 
+} from 'firebase/storage';
+import { db, auth, storage } from './firebaseClient';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
@@ -210,6 +215,39 @@ export class FirebaseService {
       console.error('Error in batch write:', error);
       throw error;
     }
+  }
+
+  // Upload file to Firebase Storage
+  static async uploadFile(file: File, path: string): Promise<string> {
+    try {
+      const storageRef = ref(storage, path);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      return downloadURL;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  }
+
+  // Delete file from Firebase Storage
+  static async deleteFile(path: string): Promise<void> {
+    try {
+      const storageRef = ref(storage, path);
+      await deleteObject(storageRef);
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      throw error;
+    }
+  }
+
+  // Generate a unique file path
+  static generateFilePath(taskId: string, fileName: string): string {
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const extension = fileName.split('.').pop();
+    const baseName = fileName.replace(/\.[^/.]+$/, '');
+    return `tasks/${taskId}/attachments/${timestamp}_${randomString}_${baseName}.${extension}`;
   }
 }
 

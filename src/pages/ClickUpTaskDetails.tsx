@@ -162,6 +162,22 @@ const ClickUpTaskDetails = () => {
         createdAt: c.createdAt?.toDate() || new Date()
       })));
 
+      // Load attachments from Firebase
+      const attachmentsData = await FirebaseService.getDocuments('attachments', [
+        { field: 'taskId', operator: '==', value: taskId }
+      ]);
+      if (attachmentsData && attachmentsData.length > 0) {
+        setAttachments(attachmentsData.map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          size: a.size,
+          type: a.type,
+          url: a.url,
+          uploadedBy: a.uploadedBy,
+          uploadedAt: a.uploadedAt
+        })));
+      }
+
       // Load activities from Firebase
       const activitiesData = await FirebaseService.getDocumentsOrdered(
         'activities',
@@ -414,27 +430,60 @@ const ClickUpTaskDetails = () => {
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files && files.length > 0) {
+    if (files && files.length > 0 && task) {
       const file = files[0];
-      const attachment: Attachment = {
-        id: Date.now().toString(),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        url: URL.createObjectURL(file),
-        uploadedBy: user?.name || 'Unknown User',
-        uploadedAt: new Date().toISOString()
-      };
-      const updatedAttachments = [...attachments, attachment];
-      setAttachments(updatedAttachments);
-      if (task) {
+      
+      try {
+        // Show loading toast
+        toast({
+          title: "Uploading File",
+          description: "Please wait while the file is being uploaded...",
+        });
+        
+        // Generate a unique path for the file
+        const filePath = FirebaseService.generateFilePath(task.id, file.name);
+        
+        // Upload file to Firebase Storage
+        const downloadURL = await FirebaseService.uploadFile(file, filePath);
+        
+        // Create attachment object with the Firebase Storage URL
+        const attachment: Attachment = {
+          id: Date.now().toString(),
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          url: downloadURL,
+          uploadedBy: user?.name || 'Unknown User',
+          uploadedAt: new Date().toISOString()
+        };
+        
+        // Save attachment metadata to Firestore
+        await FirebaseService.addDocument('attachments', {
+          ...attachment,
+          taskId: task.id,
+          filePath: filePath // Store the path for potential deletion later
+        });
+        
+        // Update local state and task
+        const updatedAttachments = [...attachments, attachment];
+        setAttachments(updatedAttachments);
         updateTask(task.id, { attachments: updatedAttachments });
+        
+        // Add activity
+        await addActivity('attachment', `attached ${file.name}`);
+        
+        toast({
+          title: "File Attached",
+          description: `${file.name} has been successfully uploaded.`,
+        });
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        toast({
+          title: "Upload Failed",
+          description: "Failed to upload the file. Please try again.",
+          variant: "destructive"
+        });
       }
-      await addActivity('attachment', `attached ${file.name}`);
-      toast({
-        title: "File Attached",
-        description: `${file.name} has been attached to the task.`,
-      });
     }
   };
 
