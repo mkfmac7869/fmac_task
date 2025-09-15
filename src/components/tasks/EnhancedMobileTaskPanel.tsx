@@ -256,10 +256,10 @@ const EnhancedMobileTaskPanel = ({
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent 
         side="bottom" 
-        className="h-[95vh] p-0 rounded-t-2xl overflow-hidden"
+        className="h-[95vh] p-0 rounded-t-2xl overflow-hidden flex flex-col"
       >
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 py-3">
+        <div className="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button
@@ -340,7 +340,7 @@ const EnhancedMobileTaskPanel = ({
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 bg-white">
+        <div className="flex border-b border-gray-200 bg-white flex-shrink-0">
           <button
             onClick={() => setActiveTab('details')}
             className={cn(
@@ -374,7 +374,7 @@ const EnhancedMobileTaskPanel = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex-1 overflow-y-auto bg-gray-50 min-h-0">
           {activeTab === 'details' ? (
             <div className="p-4 space-y-4">
               {/* Title */}

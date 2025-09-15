@@ -30,6 +30,8 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { TaskPriority } from '@/types/task';
+import { useTask } from '@/context/TaskContext';
 
 interface MobileTaskHeaderProps {
   projectName?: string;
@@ -54,6 +56,7 @@ const MobileTaskHeader = ({
   resetFilters,
   activeFilterCount
 }: MobileTaskHeaderProps) => {
+  const { projects } = useTask();
   const [showFilters, setShowFilters] = useState(false);
 
   return (
@@ -185,27 +188,96 @@ const MobileTaskHeader = ({
                 {/* Priority Filters */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-700 mb-3">Priority</h3>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
-                      variant={filters.priority === 'urgent' ? 'default' : 'outline'}
+                      variant={filters.priority === TaskPriority.URGENT ? 'default' : 'outline'}
                       size="sm"
-                      className="w-full justify-start"
-                      onClick={() => updateFilter('priority', filters.priority === 'urgent' ? 'all' : 'urgent')}
+                      className="justify-start"
+                      onClick={() => updateFilter('priority', filters.priority === TaskPriority.URGENT ? 'all' : TaskPriority.URGENT)}
                     >
-                      <Flag className="h-4 w-4 mr-2 text-red-600" />
-                      Urgent only
+                      <Flag className="h-3.5 w-3.5 mr-1.5 text-red-600 fill-current" />
+                      Urgent
                     </Button>
                     <Button
-                      variant={filters.priority === 'high' ? 'default' : 'outline'}
+                      variant={filters.priority === TaskPriority.HIGH ? 'default' : 'outline'}
                       size="sm"
-                      className="w-full justify-start"
-                      onClick={() => updateFilter('priority', filters.priority === 'high' ? 'all' : 'high')}
+                      className="justify-start"
+                      onClick={() => updateFilter('priority', filters.priority === TaskPriority.HIGH ? 'all' : TaskPriority.HIGH)}
                     >
-                      <Flag className="h-4 w-4 mr-2 text-yellow-600" />
-                      High priority
+                      <Flag className="h-3.5 w-3.5 mr-1.5 text-yellow-600 fill-current" />
+                      High
+                    </Button>
+                    <Button
+                      variant={filters.priority === TaskPriority.MEDIUM ? 'default' : 'outline'}
+                      size="sm"
+                      className="justify-start"
+                      onClick={() => updateFilter('priority', filters.priority === TaskPriority.MEDIUM ? 'all' : TaskPriority.MEDIUM)}
+                    >
+                      <Flag className="h-3.5 w-3.5 mr-1.5 text-blue-600" />
+                      Medium
+                    </Button>
+                    <Button
+                      variant={filters.priority === TaskPriority.LOW ? 'default' : 'outline'}
+                      size="sm"
+                      className="justify-start"
+                      onClick={() => updateFilter('priority', filters.priority === TaskPriority.LOW ? 'all' : TaskPriority.LOW)}
+                    >
+                      <Flag className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
+                      Low
                     </Button>
                   </div>
                 </div>
+
+                {/* Project Filter */}
+                {projects.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-3">Project</h3>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full justify-between">
+                          {filters.project === 'all' ? (
+                            <>
+                              <span>All projects</span>
+                              <Folder className="h-4 w-4 ml-2" />
+                            </>
+                          ) : (
+                            <>
+                              <span className="truncate">
+                                {projects.find(p => p.id === filters.project)?.name || 'Select project'}
+                              </span>
+                              <div 
+                                className="w-3 h-3 rounded ml-2" 
+                                style={{ 
+                                  backgroundColor: projects.find(p => p.id === filters.project)?.color || '#ccc' 
+                                }}
+                              />
+                            </>
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56 max-h-60 overflow-auto">
+                        <DropdownMenuItem onClick={() => updateFilter('project', 'all')}>
+                          All projects
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {projects.map((project) => (
+                          <DropdownMenuItem 
+                            key={project.id}
+                            onClick={() => updateFilter('project', project.id)}
+                          >
+                            <div className="flex items-center gap-2 w-full">
+                              <div 
+                                className="w-3 h-3 rounded" 
+                                style={{ backgroundColor: project.color }}
+                              />
+                              <span className="truncate">{project.name}</span>
+                            </div>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-4">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTask } from '@/context/TaskContext';
-import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import EnhancedTaskForm from './EnhancedTaskForm';
 import { useAuth } from '@/context/AuthContext';
@@ -71,27 +71,11 @@ const EnhancedNewTaskDialog = ({ isOpen, onOpenChange, defaultAssignee }: Enhanc
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Create New Task</h2>
-              <p className="text-sm text-gray-500 mt-1">Fill in the details to create a new task</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 hover:bg-gray-200"
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        
-        {/* Form Content */}
-        <div className="px-6 py-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Create New Task</DialogTitle>
+        </DialogHeader>
+        <div className="max-h-[calc(100vh-200px)] overflow-y-auto py-4">
           <EnhancedTaskForm 
             onSubmit={handleSubmit} 
             projects={projects} 
