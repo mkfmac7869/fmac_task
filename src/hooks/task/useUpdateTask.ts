@@ -44,8 +44,11 @@ export const useUpdateTask = (tasks: Task[], setTasks: React.Dispatch<React.SetS
       if (updatedFields.dueDate !== undefined) dbFields.due_date = updatedFields.dueDate;
       if (updatedFields.projectId !== undefined) dbFields.project_id = updatedFields.projectId;
       if (updatedFields.assignee !== undefined) dbFields.assigned_to = updatedFields.assignee?.id || null;
-      
-      // We don't include progress in the database update since the column doesn't exist
+      if (updatedFields.progress !== undefined) dbFields.progress = updatedFields.progress;
+      if (updatedFields.comments !== undefined) dbFields.comments = JSON.stringify(updatedFields.comments);
+      if (updatedFields.attachments !== undefined) dbFields.attachments = JSON.stringify(updatedFields.attachments);
+      if (updatedFields.subtasks !== undefined) dbFields.subtasks = JSON.stringify(updatedFields.subtasks);
+      if (updatedFields.checklists !== undefined) dbFields.checklists = JSON.stringify(updatedFields.checklists);
       
       console.log("Updating task with ID:", id, "Fields:", dbFields);
       

@@ -17,12 +17,10 @@ const SidebarItem = ({
   active
 }: SidebarItemProps) => {
   return (
-    <Link to={to} className="w-full">
-      <div className={cn("flex items-center p-3 mb-1 rounded-lg transition-colors", active ? "bg-fmac-red text-white" : "text-gray-700 hover:bg-gray-100")}>
-        <Icon className={cn("h-5 w-5 mr-3", active ? "text-white" : "text-gray-500")} />
-        <span className="font-medium">{label}</span>
-      </div>
-    </Link>
+    <div className={cn("flex items-center p-3 mb-1 rounded-lg transition-colors cursor-pointer", active ? "bg-red-600 text-white" : "text-gray-700 hover:bg-gray-100")}>
+      <Icon className={cn("h-5 w-5 mr-3", active ? "text-white" : "text-gray-500")} />
+      <span className="font-medium">{label}</span>
+    </div>
   );
 };
 

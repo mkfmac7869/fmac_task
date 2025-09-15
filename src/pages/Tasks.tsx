@@ -4,25 +4,26 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useTask } from '@/context/TaskContext';
 import { toast } from '@/hooks/use-toast';
-import KanbanColumn from '@/components/tasks/KanbanColumn';
-import NewTaskDialog from '@/components/tasks/NewTaskDialog';
-import TaskHeader from '@/components/tasks/TaskHeader';
-import TaskSummaryCards from '@/components/tasks/TaskSummaryCards';
-import TaskViewToggle from '@/components/tasks/TaskViewToggle';
-import TaskListView from '@/components/tasks/TaskListView';
-import { TaskStatus } from '@/types/task';
+import EnhancedNewTaskDialog from '@/components/tasks/EnhancedNewTaskDialog';
+import ClickUpTaskHeader from '@/components/tasks/ClickUpTaskHeader';
+import ClickUpViewSwitcher, { ViewMode } from '@/components/tasks/ClickUpViewSwitcher';
+import ClickUpListView from '@/components/tasks/ClickUpListView';
+import ClickUpTableView from '@/components/tasks/ClickUpTableView';
+import ClickUpBoardView from '@/components/tasks/ClickUpBoardView';
+import ClickUpTaskPanel from '@/components/tasks/ClickUpTaskPanel';
+import { TaskStatus, Task } from '@/types/task';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-type ViewMode = 'kanban' | 'list';
 
 const Tasks = () => {
   const navigate = useNavigate();
-  const { tasks, updateTask, getTasksByStatus, isLoading } = useTask();
+  const { tasks, updateTask, deleteTask, getTasksByStatus, isLoading } = useTask();
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const isMobile = useIsMobile();
   
-  // Always use list view on mobile
+  // Mobile-optimized view
   const effectiveViewMode = isMobile ? 'list' : viewMode;
   
   // Get tasks by status
@@ -30,135 +31,116 @@ const Tasks = () => {
   const inProgressTasks = getTasksByStatus(TaskStatus.IN_PROGRESS);
   const completedTasks = getTasksByStatus(TaskStatus.COMPLETED);
   
-  const handleDragStart = (e: React.DragEvent, taskId: string) => {
-    e.dataTransfer.setData('taskId', taskId);
-  };
-  
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-  
-  const handleDrop = (e: React.DragEvent, status: TaskStatus) => {
-    e.preventDefault();
-    
-    const taskId = e.dataTransfer.getData('taskId');
-    
-    if (!taskId) {
-      console.error("No task ID found in drag data");
-      return;
-    }
-    
-    // Find the task that's being moved
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) {
-      console.error("Task not found with ID:", taskId);
-      return;
-    }
-    
-    if (task.status === status) {
-      return;
-    }
-    
-    // Create updatedFields object with correct typing
-    const updatedFields: { status: TaskStatus; progress?: number } = {
-      status: status
-    };
-    
-    // Add progress update when moving to completed
-    if (status === TaskStatus.COMPLETED) {
-      updatedFields.progress = 100;
-    }
-    
+  const handleUpdateTask = (taskId: string, updatedFields: Partial<Task>) => {
     updateTask(taskId, updatedFields);
     
-    toast({
-      title: "Task Updated",
-      description: `Task moved to ${status.replace('_', ' ')}`,
-    });
+    if (updatedFields.status) {
+      toast({
+        title: "Task Updated",
+        description: `Task moved to ${updatedFields.status.replace('_', ' ')}`,
+      });
+    }
   };
   
   const handleViewTask = (taskId: string) => {
-    navigate(`/tasks/${taskId}`);
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      setSelectedTask(task);
+      setIsPanelOpen(true);
+    }
+  };
+  
+  const handleClosePanel = () => {
+    setIsPanelOpen(false);
+    setTimeout(() => setSelectedTask(null), 300);
+  };
+  
+  const handlePanelUpdateTask = (taskId: string, updates: Partial<Task>) => {
+    handleUpdateTask(taskId, updates);
+    // Update the selected task if it's the one being updated
+    if (selectedTask && selectedTask.id === taskId) {
+      setSelectedTask({ ...selectedTask, ...updates });
+    }
+  };
+  
+  const handleDeleteTask = (taskId: string) => {
+    deleteTask(taskId);
+    handleClosePanel();
+    toast({
+      title: "Task Deleted",
+      description: "The task has been deleted successfully.",
+    });
   };
 
   return (
     <Layout>
-      <div className={`p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto ${isMobile ? 'pb-20' : ''}`}>
-        {/* Header */}
-        <TaskHeader onAddTaskClick={() => setIsNewTaskDialogOpen(true)} />
-        <NewTaskDialog 
+      <div className="h-full flex flex-col bg-gray-50">
+        {/* ClickUp Style Header */}
+        <ClickUpTaskHeader 
+          onNewTask={() => setIsNewTaskDialogOpen(true)}
+          taskCount={tasks.length}
+        />
+        <EnhancedNewTaskDialog 
           isOpen={isNewTaskDialogOpen}
           onOpenChange={setIsNewTaskDialogOpen}
         />
         
-        {/* Task Summary Cards */}
-        <TaskSummaryCards 
-          todoTasks={todoTasks}
-          inProgressTasks={inProgressTasks}
-          completedTasks={completedTasks}
-        />
+        {/* View Switcher */}
+        <div className="bg-white border-b border-gray-200 px-4 py-2">
+          <ClickUpViewSwitcher 
+            currentView={viewMode}
+            onViewChange={setViewMode}
+            availableViews={isMobile ? ['list'] : ['list', 'board', 'table']}
+          />
+        </div>
         
-        {/* View toggle (only shown on desktop) */}
-        {!isMobile && (
-          <TaskViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-        )}
-        
-        {/* Loading state */}
-        {isLoading ? (
-          <div className="flex justify-center items-center p-8 sm:p-12">
-            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-fmac-red"></div>
-          </div>
-        ) : (
-          <>
-            {/* Kanban Board (desktop only) */}
-            {effectiveViewMode === 'kanban' && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                <KanbanColumn 
-                  title="To Do" 
-                  tasks={todoTasks} 
-                  status={TaskStatus.TODO}
-                  onTaskClick={task => navigate(`/tasks/${task.id}`)}
-                  onDragStart={handleDragStart}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  columnColor="bg-blue-50"
+        {/* Main content area */}
+        <div className="flex-1 overflow-auto">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+            </div>
+          ) : (
+            <div className="p-4">
+              {/* List View */}
+              {effectiveViewMode === 'list' && (
+                <ClickUpListView 
+                  tasks={tasks}
+                  onTaskClick={handleViewTask}
+                  onUpdateTask={handleUpdateTask}
                 />
-                <KanbanColumn 
-                  title="In Progress" 
-                  tasks={inProgressTasks} 
-                  status={TaskStatus.IN_PROGRESS}
-                  onTaskClick={task => navigate(`/tasks/${task.id}`)}
-                  onDragStart={handleDragStart}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  columnColor="bg-amber-50"
+              )}
+              
+              {/* Table View */}
+              {effectiveViewMode === 'table' && (
+                <ClickUpTableView 
+                  tasks={tasks}
+                  onTaskClick={handleViewTask}
+                  onUpdateTask={handleUpdateTask}
                 />
-                <KanbanColumn 
-                  title="Completed" 
-                  tasks={completedTasks} 
-                  status={TaskStatus.COMPLETED}
-                  onTaskClick={task => navigate(`/tasks/${task.id}`)}
-                  onDragStart={handleDragStart}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  columnColor="bg-green-50"
+              )}
+              
+              {/* Board View */}
+              {effectiveViewMode === 'board' && (
+                <ClickUpBoardView 
+                  tasks={tasks}
+                  onTaskClick={handleViewTask}
+                  onUpdateTask={handleUpdateTask}
                 />
-              </div>
-            )}
-            
-            {/* List View (default for mobile) */}
-            {effectiveViewMode === 'list' && (
-              <TaskListView 
-                todoTasks={todoTasks} 
-                inProgressTasks={inProgressTasks} 
-                completedTasks={completedTasks} 
-                onViewTask={handleViewTask} 
-              />
-            )}
-          </>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
+      
+      {/* Task Details Panel */}
+      <ClickUpTaskPanel
+        task={selectedTask}
+        isOpen={isPanelOpen}
+        onClose={handleClosePanel}
+        onUpdateTask={handlePanelUpdateTask}
+        onDeleteTask={handleDeleteTask}
+      />
     </Layout>
   );
 };

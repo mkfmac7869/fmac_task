@@ -16,6 +16,44 @@ export enum TaskPriority {
   URGENT = 'urgent',
 }
 
+export interface Comment {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface Attachment {
+  id: string;
+  name: string;
+  url: string;
+  size: number;
+  type: string;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
+export interface SubTask {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: string;
+}
+
+export interface ChecklistItem {
+  id: string;
+  content: string;
+  completed: boolean;
+}
+
+export interface Checklist {
+  id: string;
+  title: string;
+  items: ChecklistItem[];
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -39,6 +77,10 @@ export interface Task {
   } | null;
   tags: string[];
   createdAt?: string;
+  comments?: Comment[];
+  attachments?: Attachment[];
+  subtasks?: SubTask[];
+  checklists?: Checklist[];
 }
 
 export interface Project {

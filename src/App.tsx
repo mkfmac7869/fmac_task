@@ -7,6 +7,7 @@ import AuthGuard from './components/AuthGuard';
 import { useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
 import { initializePushNotifications } from './lib/pushNotificationService';
+import './styles/clickup-theme.css';
 
 // Pages
 import Index from './pages/Index';
@@ -14,7 +15,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Tasks from './pages/Tasks';
-import TaskDetails from './pages/TaskDetails';
+import ClickUpTaskDetails from './pages/ClickUpTaskDetails';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/ProjectDetails';
 import Team from './pages/Team';
@@ -62,7 +63,7 @@ function App() {
             <Route element={<AuthGuard />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/tasks" element={<Tasks />} />
-              <Route path="/tasks/:taskId" element={<TaskDetails />} />
+              <Route path="/tasks/:taskId" element={<ClickUpTaskDetails />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/projects/:projectId" element={<ProjectDetails />} />
               <Route path="/team" element={<Team />} />

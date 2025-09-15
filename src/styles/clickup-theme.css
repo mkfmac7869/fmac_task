@@ -1,0 +1,214 @@
+/* ClickUp Theme Colors and Styles */
+
+:root {
+  /* ClickUp Colors */
+  --clickup-purple: #7b68ee;
+  --clickup-purple-dark: #6c5ce7;
+  --clickup-purple-light: #a29bfe;
+  --clickup-blue: #4a90e2;
+  --clickup-green: #44d362;
+  --clickup-yellow: #ffd93d;
+  --clickup-orange: #ff9f43;
+  --clickup-red: #ee5a6f;
+  --clickup-gray-50: #f8f9fa;
+  --clickup-gray-100: #f1f3f5;
+  --clickup-gray-200: #e9ecef;
+  --clickup-gray-300: #dee2e6;
+  --clickup-gray-400: #ced4da;
+  --clickup-gray-500: #adb5bd;
+  --clickup-gray-600: #6c757d;
+  --clickup-gray-700: #495057;
+  --clickup-gray-800: #343a40;
+  --clickup-gray-900: #212529;
+}
+
+/* Override Tailwind's violet colors with ClickUp purple */
+.bg-violet-50 {
+  background-color: #f3f1ff;
+}
+
+.bg-violet-100 {
+  background-color: #e5e0ff;
+}
+
+.bg-violet-600 {
+  background-color: var(--clickup-purple);
+}
+
+.bg-violet-700 {
+  background-color: var(--clickup-purple-dark);
+}
+
+.text-violet-600 {
+  color: var(--clickup-purple);
+}
+
+.border-violet-600 {
+  border-color: var(--clickup-purple);
+}
+
+.hover\:bg-violet-700:hover {
+  background-color: var(--clickup-purple-dark);
+}
+
+/* Custom scrollbar for ClickUp style */
+.clickup-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.clickup-scrollbar::-webkit-scrollbar-track {
+  background: var(--clickup-gray-100);
+  border-radius: 3px;
+}
+
+.clickup-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--clickup-gray-400);
+  border-radius: 3px;
+}
+
+.clickup-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--clickup-gray-500);
+}
+
+/* Task card hover effects */
+.clickup-task-card {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.clickup-task-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ClickUp button styles */
+.clickup-btn-primary {
+  background-color: var(--clickup-purple);
+  color: white;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.clickup-btn-primary:hover {
+  background-color: var(--clickup-purple-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(123, 104, 238, 0.3);
+}
+
+/* Status colors */
+.status-todo {
+  color: var(--clickup-gray-600);
+}
+
+.status-in-progress {
+  color: var(--clickup-blue);
+}
+
+.status-in-review {
+  color: var(--clickup-purple);
+}
+
+.status-completed {
+  color: var(--clickup-green);
+}
+
+.status-blocked {
+  color: var(--clickup-red);
+}
+
+/* Priority colors */
+.priority-urgent {
+  color: var(--clickup-red);
+}
+
+.priority-high {
+  color: var(--clickup-orange);
+}
+
+.priority-medium {
+  color: var(--clickup-yellow);
+}
+
+.priority-low {
+  color: var(--clickup-gray-400);
+}
+
+/* Dropdown menu animations */
+.dropdown-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.dropdown-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 200ms, transform 200ms;
+}
+
+/* Board column styles */
+.clickup-board-column {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s ease;
+}
+
+.clickup-board-column:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Table styles */
+.clickup-table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--clickup-gray-600);
+}
+
+.clickup-table tr:hover {
+  background-color: var(--clickup-gray-50);
+}
+
+/* Progress bar styles */
+.clickup-progress {
+  background-color: var(--clickup-gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.clickup-progress-bar {
+  background-color: var(--clickup-purple);
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* Tag styles */
+.clickup-tag {
+  background-color: var(--clickup-gray-100);
+  color: var(--clickup-gray-700);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Panel slide animation */
+.clickup-panel-enter {
+  transform: translateX(100%);
+}
+
+.clickup-panel-enter-active {
+  transform: translateX(0);
+  transition: transform 300ms ease-out;
+}
+
+.clickup-panel-exit {
+  transform: translateX(0);
+}
+
+.clickup-panel-exit-active {
+  transform: translateX(100%);
+  transition: transform 300ms ease-in;
+}

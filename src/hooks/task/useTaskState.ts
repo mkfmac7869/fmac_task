@@ -17,13 +17,19 @@ export const useTaskState = () => {
       
       try {
         setIsLoading(true);
-        console.log("Fetching tasks with user role:", user.role);
+        console.log("Fetching tasks with user roles:", user.roles);
         
         // Build conditions for Firebase query
         let data = [];
         
         // Admin can see all tasks, other roles have restrictions
-        if (user.role !== 'admin') {
+        console.log("User roles check:", { 
+          roles: user.roles, 
+          isAdmin: user.roles?.includes('admin'),
+          user: user
+        });
+        
+        if (!user.roles?.includes('admin')) {
           // Non-admin users can only see tasks assigned to them or created by them
           // We need to make two separate queries and combine results
           console.log("Non-admin user - fetching tasks assigned to or created by user");
@@ -45,7 +51,9 @@ export const useTaskState = () => {
           data = uniqueTasks;
         } else {
           console.log("Admin user - fetching all tasks");
+          console.log("Admin user - fetching ALL tasks");
           data = await FirebaseService.getDocuments('tasks');
+          console.log("Admin tasks fetched, count:", data?.length || 0);
         }
         
         console.log("About to execute query");
@@ -84,10 +92,15 @@ export const useTaskState = () => {
               }
             }
             
-            // Calculate progress based on status since we don't have a progress column
-            const progress = 
-              task.status === 'completed' ? 100 : 
-              task.status === 'in_progress' ? 50 : 0;
+            // Parse JSON fields
+            const parseJSON = (str: string | undefined) => {
+              if (!str) return undefined;
+              try {
+                return JSON.parse(str);
+              } catch {
+                return undefined;
+              }
+            };
             
             return {
               id: task.id,
@@ -97,11 +110,15 @@ export const useTaskState = () => {
               priority: task.priority,
               dueDate: task.due_date,
               projectId: task.project_id,
-              progress: progress,
+              progress: task.progress || 0,
               assignee: assignee,
               creator: creator,
               createdAt: task.created_at,
-              tags: []
+              tags: [],
+              comments: parseJSON(task.comments) || [],
+              attachments: parseJSON(task.attachments) || [],
+              subtasks: parseJSON(task.subtasks) || [],
+              checklists: parseJSON(task.checklists) || []
             };
           }));
           

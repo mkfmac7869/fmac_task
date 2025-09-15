@@ -62,7 +62,7 @@ const SidebarNavigation = ({ user, bottomNav = false }: SidebarNavigationProps) 
             to={item.to}
             className={({ isActive }) => `
               flex flex-col items-center justify-center py-1 px-2 
-              ${isActive ? 'text-fmac-red' : 'text-gray-600'}
+              ${isActive ? 'text-red-600' : 'text-gray-600'}
             `}
           >
             {/* The fix: Use a component type instead of an element by directly using the icon component */}
@@ -79,12 +79,16 @@ const SidebarNavigation = ({ user, bottomNav = false }: SidebarNavigationProps) 
       <h2 className="px-3 text-xs font-semibold text-gray-500 uppercase mb-2">Navigation</h2>
       <ul className="space-y-1">
         {displayItems.map((item) => (
-          <SidebarItem
-            key={item.to}
-            to={item.to}
-            icon={item.icon}
-            label={item.label}
-          />
+          <NavLink key={item.to} to={item.to}>
+            {({ isActive }) => (
+              <SidebarItem
+                to={item.to}
+                icon={item.icon}
+                label={item.label}
+                active={isActive}
+              />
+            )}
+          </NavLink>
         ))}
       </ul>
     </nav>
