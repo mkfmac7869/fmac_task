@@ -6,7 +6,6 @@ import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -161,10 +160,12 @@ const Signup = () => {
                 {isLoading ? 'Creating account...' : 'Create account'}
               </Button>
               
-              <div className="relative my-4">
-                <Separator />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="bg-white px-3 text-xs text-gray-500 font-medium">Or continue with</span>
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-4 text-gray-500 font-medium">Or continue with</span>
                 </div>
               </div>
               
