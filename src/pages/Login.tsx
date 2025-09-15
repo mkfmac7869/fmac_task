@@ -134,7 +134,7 @@ const Login = () => {
               <div className="relative my-4">
                 <Separator />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="bg-white px-2 text-xs text-muted-foreground">Or continue with</span>
+                  <span className="bg-white px-3 text-xs text-gray-500 font-medium">Or continue with</span>
                 </div>
               </div>
               
