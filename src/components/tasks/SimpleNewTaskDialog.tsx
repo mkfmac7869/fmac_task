@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from '@/hooks/use-toast';
+import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
 import { TaskStatus, TaskPriority } from '@/types/task';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +25,7 @@ interface SimpleNewTaskDialogProps {
 const SimpleNewTaskDialog = ({ isOpen, onOpenChange }: SimpleNewTaskDialogProps) => {
   const { projects, addTask } = useTask();
   const { user } = useAuth();
+  const { users, isLoading: isLoadingMembers } = useFetchMembers();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [title, setTitle] = useState('');
@@ -31,6 +34,7 @@ const SimpleNewTaskDialog = ({ isOpen, onOpenChange }: SimpleNewTaskDialogProps)
   const [status, setStatus] = useState<TaskStatus>(TaskStatus.TODO);
   const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
   const [dueDate, setDueDate] = useState<Date | undefined>(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+  const [assigneeId, setAssigneeId] = useState<string>('');
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +50,15 @@ const SimpleNewTaskDialog = ({ isOpen, onOpenChange }: SimpleNewTaskDialogProps)
     setIsSubmitting(true);
     
     try {
+      // Find the selected assignee
+      const selectedAssignee = assigneeId ? users.find(u => u.id === assigneeId) : null;
+      const assignee = selectedAssignee ? {
+        id: selectedAssignee.id,
+        name: selectedAssignee.name,
+        avatar: selectedAssignee.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedAssignee.name)}`,
+        email: selectedAssignee.email
+      } : null;
+
       const newTask = {
         title,
         description,
@@ -54,7 +67,7 @@ const SimpleNewTaskDialog = ({ isOpen, onOpenChange }: SimpleNewTaskDialogProps)
         priority,
         dueDate: dueDate ? dueDate.toISOString() : new Date().toISOString(),
         progress: 0,
-        assignee: null,
+        assignee,
         tags: [],
         comments: [],
         attachments: [],
@@ -75,6 +88,7 @@ const SimpleNewTaskDialog = ({ isOpen, onOpenChange }: SimpleNewTaskDialogProps)
       setStatus(TaskStatus.TODO);
       setPriority(TaskPriority.MEDIUM);
       setDueDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+      setAssigneeId('');
       
       onOpenChange(false);
     } catch (error) {
@@ -203,6 +217,44 @@ const SimpleNewTaskDialog = ({ isOpen, onOpenChange }: SimpleNewTaskDialogProps)
                 </PopoverContent>
               </Popover>
             </div>
+          </div>
+          
+          {/* Assignee */}
+          <div className="space-y-2">
+            <Label>Assignee</Label>
+            <Select value={assigneeId} onValueChange={setAssigneeId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select assignee (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-500">Unassigned</span>
+                  </div>
+                </SelectItem>
+                {isLoadingMembers ? (
+                  <SelectItem value="loading" disabled>
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                      <span>Loading members...</span>
+                    </div>
+                  </SelectItem>
+                ) : (
+                  users.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={member.avatar} />
+                          <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span>{member.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
           </div>
           
           {/* Submit Buttons */}
