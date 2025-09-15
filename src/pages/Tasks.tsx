@@ -22,9 +22,6 @@ const Tasks = () => {
   const navigate = useNavigate();
   const { tasks, updateTask, deleteTask, getTasksByStatus, isLoading } = useTask();
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
-  
-  // Debug logging
-  console.log('Tasks component rendered, dialog open:', isNewTaskDialogOpen);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -146,10 +143,7 @@ const Tasks = () => {
       <div className="h-full flex flex-col bg-gray-50">
         {/* Desktop Header */}
         <EnhancedTaskHeader 
-          onNewTask={() => {
-            console.log('New task button clicked');
-            setIsNewTaskDialogOpen(true);
-          }}
+          onNewTask={() => setIsNewTaskDialogOpen(true)}
           taskCount={filteredTasks.length}
           filters={filters}
           sortConfig={sortConfig}
