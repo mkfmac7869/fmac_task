@@ -220,9 +220,28 @@ export class FirebaseService {
   // Upload file to Firebase Storage
   static async uploadFile(file: File, path: string): Promise<string> {
     try {
+      // Check if user is authenticated
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('User must be authenticated to upload files');
+      }
+      
+      console.log('Uploading file:', file.name, 'to path:', path);
+      console.log('Current user:', currentUser.uid);
+      
       const storageRef = ref(storage, path);
-      const snapshot = await uploadBytes(storageRef, file);
+      const metadata = {
+        contentType: file.type,
+        customMetadata: {
+          uploadedBy: currentUser.uid,
+          uploadedAt: new Date().toISOString()
+        }
+      };
+      
+      const snapshot = await uploadBytes(storageRef, file, metadata);
       const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      console.log('File uploaded successfully, URL:', downloadURL);
       return downloadURL;
     } catch (error) {
       console.error('Error uploading file:', error);
