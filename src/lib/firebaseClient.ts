@@ -6,13 +6,13 @@ import { getAnalytics } from 'firebase/analytics';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyC-qbrtW4VluVn-b1tfvatozee3HF5Q344",
-  authDomain: "fmactasks.firebaseapp.com",
-  projectId: "fmactasks",
-  storageBucket: "fmactasks.firebasestorage.app",
-  messagingSenderId: "289312359559",
-  appId: "1:289312359559:web:d91b0b241b9aece596a422",
-  measurementId: "G-8FGY9FGRTL"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyC-qbrtW4VluVn-b1tfvatozee3HF5Q344",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "fmactasks.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "fmactasks",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "fmactasks.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "289312359559",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:289312359559:web:d91b0b241b9aece596a422",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-8FGY9FGRTL"
 };
 
 // Initialize Firebase

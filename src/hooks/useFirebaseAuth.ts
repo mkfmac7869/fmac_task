@@ -244,6 +244,11 @@ export const useFirebaseAuth = () => {
       provider.addScope('email');
       provider.addScope('profile');
       
+      // Add custom parameters for better UX
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
       
