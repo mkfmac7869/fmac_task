@@ -106,16 +106,23 @@ export class FirebaseService {
   }
 
   // Get documents with ordering
-  static async getDocumentsOrdered(collectionName: string, orderByField: string, orderDirection: 'asc' | 'desc' = 'desc', conditions?: any[]) {
+  static async getDocumentsOrdered(collectionName: string, orderByField: string, orderDirection: 'asc' | 'desc' = 'desc', conditions?: any[], limitCount?: number) {
     try {
       let q;
+      const queryConstraints = [];
       
       if (conditions && conditions.length > 0) {
         const whereConditions = conditions.map(condition => where(condition.field, condition.operator, condition.value));
-        q = query(collection(db, collectionName), ...whereConditions, orderBy(orderByField, orderDirection));
-      } else {
-        q = query(collection(db, collectionName), orderBy(orderByField, orderDirection));
+        queryConstraints.push(...whereConditions);
       }
+      
+      queryConstraints.push(orderBy(orderByField, orderDirection));
+      
+      if (limitCount) {
+        queryConstraints.push(limit(limitCount));
+      }
+      
+      q = query(collection(db, collectionName), ...queryConstraints);
       
       const querySnapshot = await getDocs(q);
       const documents: any[] = [];
