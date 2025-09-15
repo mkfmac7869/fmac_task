@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Task, TaskStatus, TaskPriority } from '@/types/task';
 import { useTask } from '@/context/TaskContext';
+import { useTaskFilters } from '@/hooks/useTaskFilters';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -108,22 +109,17 @@ const MobileTaskListView = ({
   onNewTask 
 }: MobileTaskListViewProps) => {
   const { projects } = useTask();
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    filters,
+    sortConfig,
+    filteredTasks,
+    updateFilter,
+    resetFilters,
+    updateSort,
+    activeFilterCount
+  } = useTaskFilters(tasks);
+  
   const [showFilters, setShowFilters] = useState(false);
-  const [activeTab, setActiveTab] = useState<TaskStatus | 'all'>('all');
-  const [selectedPriority, setSelectedPriority] = useState<TaskPriority | null>(null);
-
-  // Filter tasks based on search and filters
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         task.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = activeTab === 'all' || task.status === activeTab;
-    
-    const matchesPriority = !selectedPriority || task.priority === selectedPriority;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
 
   // Group tasks by status for better organization
   const groupedTasks = filteredTasks.reduce((groups, task) => {
@@ -276,13 +272,13 @@ const MobileTaskListView = ({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input 
             placeholder="Search tasks..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={filters.search}
+            onChange={(e) => updateFilter('search', e.target.value)}
             className="pl-9 pr-9 h-10 bg-gray-50 border-gray-200 focus:bg-white"
           />
-          {searchQuery && (
+          {filters.search && (
             <button
-              onClick={() => setSearchQuery('')}
+              onClick={() => updateFilter('search', '')}
               className="absolute right-3 top-1/2 transform -translate-y-1/2"
             >
               <X className="h-4 w-4 text-gray-400" />
@@ -293,12 +289,12 @@ const MobileTaskListView = ({
         {/* Filter Tabs */}
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 no-scrollbar">
           <Button
-            variant={activeTab === 'all' ? 'default' : 'outline'}
+            variant={filters.status === 'all' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setActiveTab('all')}
+            onClick={() => updateFilter('status', 'all')}
             className={cn(
               "whitespace-nowrap h-8",
-              activeTab === 'all' && "bg-red-600 hover:bg-red-700 text-white"
+              filters.status === 'all' && "bg-red-600 hover:bg-red-700 text-white"
             )}
           >
             All Tasks
@@ -314,12 +310,12 @@ const MobileTaskListView = ({
             return (
               <Button
                 key={status}
-                variant={activeTab === status ? 'default' : 'outline'}
+                variant={filters.status === status ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setActiveTab(status as TaskStatus)}
+                onClick={() => updateFilter('status', status as TaskStatus)}
                 className={cn(
                   "whitespace-nowrap h-8",
-                  activeTab === status && "bg-red-600 hover:bg-red-700 text-white"
+                  filters.status === status && "bg-red-600 hover:bg-red-700 text-white"
                 )}
               >
                 <Icon className="h-3.5 w-3.5 mr-1.5" />
@@ -350,7 +346,7 @@ const MobileTaskListView = ({
           </div>
         ) : (
           <>
-            {activeTab === 'all' ? (
+            {filters.status === 'all' ? (
               // Show grouped tasks when "All" is selected
               Object.entries(groupedTasks).map(([status, statusTasks]) => {
                 if (statusTasks.length === 0) return null;

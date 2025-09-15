@@ -5,7 +5,7 @@ import Layout from '@/components/Layout';
 import { useTask } from '@/context/TaskContext';
 import { toast } from '@/hooks/use-toast';
 import EnhancedNewTaskDialog from '@/components/tasks/EnhancedNewTaskDialog';
-import ClickUpTaskHeader from '@/components/tasks/ClickUpTaskHeader';
+import EnhancedTaskHeader from '@/components/tasks/EnhancedTaskHeader';
 import ClickUpViewSwitcher, { ViewMode } from '@/components/tasks/ClickUpViewSwitcher';
 import ClickUpListView from '@/components/tasks/ClickUpListView';
 import ClickUpTableView from '@/components/tasks/ClickUpTableView';
@@ -13,9 +13,10 @@ import ClickUpBoardView from '@/components/tasks/ClickUpBoardView';
 import ClickUpTaskPanel from '@/components/tasks/ClickUpTaskPanel';
 import MobileTaskListView from '@/components/tasks/MobileTaskListView';
 import MobileTaskHeader from '@/components/tasks/MobileTaskHeader';
-import MobileTaskPanel from '@/components/tasks/MobileTaskPanel';
+import EnhancedMobileTaskPanel from '@/components/tasks/EnhancedMobileTaskPanel';
 import { TaskStatus, Task } from '@/types/task';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTaskFilters } from '@/hooks/useTaskFilters';
 
 const Tasks = () => {
   const navigate = useNavigate();
@@ -25,6 +26,17 @@ const Tasks = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const isMobile = useIsMobile();
+  
+  // Use task filters hook
+  const {
+    filters,
+    sortConfig,
+    filteredTasks,
+    updateFilter,
+    resetFilters,
+    updateSort,
+    activeFilterCount
+  } = useTaskFilters(tasks);
   
   // Mobile-optimized view
   const effectiveViewMode = isMobile ? 'list' : viewMode;
@@ -81,10 +93,16 @@ const Tasks = () => {
         <div className="h-full flex flex-col bg-gray-50">
           {/* Mobile Header */}
           <MobileTaskHeader 
-            taskCount={tasks.length}
+            taskCount={filteredTasks.length}
             onMenuClick={() => {
               // Handle menu click if needed
             }}
+            filters={filters}
+            sortConfig={sortConfig}
+            updateFilter={updateFilter}
+            updateSort={updateSort}
+            resetFilters={resetFilters}
+            activeFilterCount={activeFilterCount}
           />
           
           {/* Mobile Task List */}
@@ -108,7 +126,7 @@ const Tasks = () => {
           />
           
           {/* Task Details Panel */}
-          <MobileTaskPanel
+          <EnhancedMobileTaskPanel
             task={selectedTask}
             isOpen={isPanelOpen}
             onClose={handleClosePanel}
@@ -124,9 +142,15 @@ const Tasks = () => {
     <Layout>
       <div className="h-full flex flex-col bg-gray-50">
         {/* Desktop Header */}
-        <ClickUpTaskHeader 
+        <EnhancedTaskHeader 
           onNewTask={() => setIsNewTaskDialogOpen(true)}
-          taskCount={tasks.length}
+          taskCount={filteredTasks.length}
+          filters={filters}
+          sortConfig={sortConfig}
+          updateFilter={updateFilter}
+          updateSort={updateSort}
+          resetFilters={resetFilters}
+          activeFilterCount={activeFilterCount}
         />
         <EnhancedNewTaskDialog 
           isOpen={isNewTaskDialogOpen}
@@ -153,7 +177,7 @@ const Tasks = () => {
               {/* List View */}
               {viewMode === 'list' && (
                 <ClickUpListView 
-                  tasks={tasks}
+                  tasks={filteredTasks}
                   onTaskClick={handleViewTask}
                   onUpdateTask={handleUpdateTask}
                 />
@@ -162,7 +186,7 @@ const Tasks = () => {
               {/* Table View */}
               {viewMode === 'table' && (
                 <ClickUpTableView 
-                  tasks={tasks}
+                  tasks={filteredTasks}
                   onTaskClick={handleViewTask}
                   onUpdateTask={handleUpdateTask}
                 />
@@ -171,7 +195,7 @@ const Tasks = () => {
               {/* Board View */}
               {viewMode === 'board' && (
                 <ClickUpBoardView 
-                  tasks={tasks}
+                  tasks={filteredTasks}
                   onTaskClick={handleViewTask}
                   onUpdateTask={handleUpdateTask}
                 />

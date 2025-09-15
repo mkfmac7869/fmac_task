@@ -35,34 +35,26 @@ interface MobileTaskHeaderProps {
   projectName?: string;
   taskCount?: number;
   onMenuClick?: () => void;
-  onFilterChange?: (filters: any) => void;
-  onSortChange?: (sort: string) => void;
+  filters: any;
+  sortConfig: any;
+  updateFilter: (key: string, value: any) => void;
+  updateSort: (field: string) => void;
+  resetFilters: () => void;
+  activeFilterCount: number;
 }
 
 const MobileTaskHeader = ({ 
   projectName = 'All Tasks',
   taskCount = 0,
   onMenuClick,
-  onFilterChange,
-  onSortChange
+  filters,
+  sortConfig,
+  updateFilter,
+  updateSort,
+  resetFilters,
+  activeFilterCount
 }: MobileTaskHeaderProps) => {
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    showCompleted: true,
-    assignedToMe: false,
-    unassigned: false,
-    dueToday: false,
-    overdue: false,
-    highPriority: false
-  });
-
-  const activeFilterCount = Object.values(filters).filter(Boolean).length;
-
-  const handleFilterChange = (key: string, value: boolean) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    onFilterChange?.(newFilters);
-  };
 
   return (
     <div className="bg-white border-b border-gray-200">
@@ -125,7 +117,7 @@ const MobileTaskHeader = ({
                       <Switch
                         id="show-completed"
                         checked={filters.showCompleted}
-                        onCheckedChange={(checked) => handleFilterChange('showCompleted', checked)}
+                        onCheckedChange={(checked) => updateFilter('showCompleted', checked)}
                       />
                     </div>
                   </div>
@@ -135,28 +127,24 @@ const MobileTaskHeader = ({
                 <div>
                   <h3 className="text-sm font-medium text-gray-700 mb-3">Assignment</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="assigned-to-me" className="flex items-center gap-2 cursor-pointer">
-                        <User className="h-4 w-4 text-gray-500" />
-                        Assigned to me
-                      </Label>
-                      <Switch
-                        id="assigned-to-me"
-                        checked={filters.assignedToMe}
-                        onCheckedChange={(checked) => handleFilterChange('assignedToMe', checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="unassigned" className="flex items-center gap-2 cursor-pointer">
-                        <User className="h-4 w-4 text-gray-400" />
-                        Unassigned tasks
-                      </Label>
-                      <Switch
-                        id="unassigned"
-                        checked={filters.unassigned}
-                        onCheckedChange={(checked) => handleFilterChange('unassigned', checked)}
-                      />
-                    </div>
+                    <Button
+                      variant={filters.assignee === 'me' ? 'default' : 'outline'}
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => updateFilter('assignee', filters.assignee === 'me' ? 'all' : 'me')}
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Assigned to me
+                    </Button>
+                    <Button
+                      variant={filters.assignee === 'unassigned' ? 'default' : 'outline'}
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => updateFilter('assignee', filters.assignee === 'unassigned' ? 'all' : 'unassigned')}
+                    >
+                      <User className="h-4 w-4 mr-2 text-gray-400" />
+                      Unassigned tasks
+                    </Button>
                   </div>
                 </div>
 
@@ -164,28 +152,33 @@ const MobileTaskHeader = ({
                 <div>
                   <h3 className="text-sm font-medium text-gray-700 mb-3">Due Date</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="due-today" className="flex items-center gap-2 cursor-pointer">
-                        <Calendar className="h-4 w-4 text-gray-500" />
-                        Due today
-                      </Label>
-                      <Switch
-                        id="due-today"
-                        checked={filters.dueToday}
-                        onCheckedChange={(checked) => handleFilterChange('dueToday', checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="overdue" className="flex items-center gap-2 cursor-pointer">
-                        <Calendar className="h-4 w-4 text-red-500" />
-                        Overdue tasks
-                      </Label>
-                      <Switch
-                        id="overdue"
-                        checked={filters.overdue}
-                        onCheckedChange={(checked) => handleFilterChange('overdue', checked)}
-                      />
-                    </div>
+                    <Button
+                      variant={filters.dueDate === 'today' ? 'default' : 'outline'}
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => updateFilter('dueDate', filters.dueDate === 'today' ? 'all' : 'today')}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Due today
+                    </Button>
+                    <Button
+                      variant={filters.dueDate === 'overdue' ? 'default' : 'outline'}
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => updateFilter('dueDate', filters.dueDate === 'overdue' ? 'all' : 'overdue')}
+                    >
+                      <Calendar className="h-4 w-4 mr-2 text-red-500" />
+                      Overdue tasks
+                    </Button>
+                    <Button
+                      variant={filters.dueDate === 'this_week' ? 'default' : 'outline'}
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => updateFilter('dueDate', filters.dueDate === 'this_week' ? 'all' : 'this_week')}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      This week
+                    </Button>
                   </div>
                 </div>
 
@@ -193,17 +186,24 @@ const MobileTaskHeader = ({
                 <div>
                   <h3 className="text-sm font-medium text-gray-700 mb-3">Priority</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="high-priority" className="flex items-center gap-2 cursor-pointer">
-                        <Flag className="h-4 w-4 text-red-600" />
-                        High priority only
-                      </Label>
-                      <Switch
-                        id="high-priority"
-                        checked={filters.highPriority}
-                        onCheckedChange={(checked) => handleFilterChange('highPriority', checked)}
-                      />
-                    </div>
+                    <Button
+                      variant={filters.priority === 'urgent' ? 'default' : 'outline'}
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => updateFilter('priority', filters.priority === 'urgent' ? 'all' : 'urgent')}
+                    >
+                      <Flag className="h-4 w-4 mr-2 text-red-600" />
+                      Urgent only
+                    </Button>
+                    <Button
+                      variant={filters.priority === 'high' ? 'default' : 'outline'}
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => updateFilter('priority', filters.priority === 'high' ? 'all' : 'high')}
+                    >
+                      <Flag className="h-4 w-4 mr-2 text-yellow-600" />
+                      High priority
+                    </Button>
                   </div>
                 </div>
 
@@ -212,17 +212,7 @@ const MobileTaskHeader = ({
                   <Button
                     variant="outline"
                     className="flex-1"
-                    onClick={() => {
-                      setFilters({
-                        showCompleted: true,
-                        assignedToMe: false,
-                        unassigned: false,
-                        dueToday: false,
-                        overdue: false,
-                        highPriority: false
-                      });
-                      onFilterChange?.({});
-                    }}
+                    onClick={resetFilters}
                   >
                     Clear All
                   </Button>
@@ -247,21 +237,41 @@ const MobileTaskHeader = ({
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuLabel>Sort by</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onSortChange?.('dueDate')}>
+              <DropdownMenuItem onClick={() => updateSort('dueDate')}>
                 <Calendar className="h-4 w-4 mr-2" />
                 Due date
+                {sortConfig.field === 'dueDate' && (
+                  <span className="ml-auto text-xs text-gray-500">
+                    {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSortChange?.('priority')}>
+              <DropdownMenuItem onClick={() => updateSort('priority')}>
                 <Flag className="h-4 w-4 mr-2" />
                 Priority
+                {sortConfig.field === 'priority' && (
+                  <span className="ml-auto text-xs text-gray-500">
+                    {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSortChange?.('name')}>
+              <DropdownMenuItem onClick={() => updateSort('title')}>
                 <SortAsc className="h-4 w-4 mr-2" />
                 Task name
+                {sortConfig.field === 'title' && (
+                  <span className="ml-auto text-xs text-gray-500">
+                    {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSortChange?.('status')}>
+              <DropdownMenuItem onClick={() => updateSort('status')}>
                 <Check className="h-4 w-4 mr-2" />
                 Status
+                {sortConfig.field === 'status' && (
+                  <span className="ml-auto text-xs text-gray-500">
+                    {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
