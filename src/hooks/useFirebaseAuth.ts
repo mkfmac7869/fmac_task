@@ -4,6 +4,8 @@ import {
   createUserWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
+  signInWithPopup,
+  GoogleAuthProvider,
   User as FirebaseUser,
   updateProfile as updateFirebaseProfile
 } from 'firebase/auth';
@@ -233,6 +235,77 @@ export const useFirebaseAuth = () => {
     }
   };
 
+  // Google Sign-In function
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
+      
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+      
+      // Check if user profile exists in Firestore
+      const userDoc = await getDoc(doc(db, 'profiles', firebaseUser.uid));
+      
+      if (userDoc.exists()) {
+        // Existing user - just login
+        const userData = await convertFirebaseUser(firebaseUser);
+        setUser(userData);
+        
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in with Google",
+        });
+        
+        navigate('/dashboard');
+      } else {
+        // New user - create profile
+        const isAdmin = firebaseUser.email === 'mkfmac7@gmail.com' || firebaseUser.email === 'mk7869148e@gmail.com';
+        const userProfile = {
+          name: firebaseUser.displayName || 'Google User',
+          email: firebaseUser.email || '',
+          avatar: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || 'Google User')}&background=ea384c&color=fff`,
+          roles: isAdmin ? ['admin'] : ['member'],
+          department: isAdmin ? 'Management' : 'General',
+          isApproved: true, // All Google users are auto-approved
+          approvedBy: 'google',
+          approvedAt: new Date(),
+          createdAt: new Date()
+        };
+
+        await setDoc(doc(db, 'profiles', firebaseUser.uid), userProfile);
+
+        // Convert to our User type and set state
+        const userData = await convertFirebaseUser(firebaseUser);
+        setUser(userData);
+        
+        toast({
+          title: "Welcome!",
+          description: "Account created successfully with Google",
+        });
+        
+        navigate('/dashboard');
+      }
+    } catch (error: any) {
+      console.error('Google sign-in error:', error);
+      setLoading(false);
+      
+      if (error.code === 'auth/popup-closed-by-user') {
+        // User closed the popup, don't show error
+        return;
+      } else if (error.code === 'auth/popup-blocked') {
+        throw new Error('Popup was blocked. Please allow popups for this site.');
+      } else {
+        throw new Error('Failed to sign in with Google. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Logout function
   const logout = async () => {
     try {
@@ -337,6 +410,7 @@ export const useFirebaseAuth = () => {
     logout,
     register,
     signup: register, // Alias for register
+    signInWithGoogle,
     updateProfile
   };
 };

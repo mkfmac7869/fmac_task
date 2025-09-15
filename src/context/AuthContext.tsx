@@ -7,7 +7,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading, login, logout, register, signup, updateProfile } = useFirebaseAuth();
+  const { user, loading, login, logout, register, signup, signInWithGoogle, updateProfile } = useFirebaseAuth();
   const { hasPermission, canViewDepartment, canManageDepartment } = usePermissions(user);
 
   return (
@@ -18,6 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout, 
         register,
         signup,
+        signInWithGoogle,
         updateProfile,
         loading, 
         isLoading: loading,

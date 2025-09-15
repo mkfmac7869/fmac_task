@@ -24,6 +24,7 @@ export interface AuthContextType {
   logout: () => void;
   register: (email: string, password: string, name: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   updateProfile: (userData: Partial<User>) => void;
   loading: boolean;
   isLoading: boolean;
