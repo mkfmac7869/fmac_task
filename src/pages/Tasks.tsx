@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useTask } from '@/context/TaskContext';
 import { toast } from '@/hooks/use-toast';
-import BasicNewTaskDialog from '@/components/tasks/BasicNewTaskDialog';
+import MinimalNewTaskDialog from '@/components/tasks/MinimalNewTaskDialog';
 import EnhancedTaskHeader from '@/components/tasks/EnhancedTaskHeader';
 import ClickUpViewSwitcher, { ViewMode } from '@/components/tasks/ClickUpViewSwitcher';
 import ClickUpListView from '@/components/tasks/ClickUpListView';
@@ -22,6 +22,9 @@ const Tasks = () => {
   const navigate = useNavigate();
   const { tasks, updateTask, deleteTask, getTasksByStatus, isLoading } = useTask();
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
+  
+  // Debug logging
+  console.log('Tasks component rendered, dialog open:', isNewTaskDialogOpen);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -120,7 +123,7 @@ const Tasks = () => {
           )}
           
           {/* New Task Dialog */}
-          <BasicNewTaskDialog 
+          <MinimalNewTaskDialog 
             isOpen={isNewTaskDialogOpen}
             onOpenChange={setIsNewTaskDialogOpen}
           />
@@ -143,7 +146,10 @@ const Tasks = () => {
       <div className="h-full flex flex-col bg-gray-50">
         {/* Desktop Header */}
         <EnhancedTaskHeader 
-          onNewTask={() => setIsNewTaskDialogOpen(true)}
+          onNewTask={() => {
+            console.log('New task button clicked');
+            setIsNewTaskDialogOpen(true);
+          }}
           taskCount={filteredTasks.length}
           filters={filters}
           sortConfig={sortConfig}
@@ -152,7 +158,7 @@ const Tasks = () => {
           resetFilters={resetFilters}
           activeFilterCount={activeFilterCount}
         />
-        <BasicNewTaskDialog 
+        <MinimalNewTaskDialog 
           isOpen={isNewTaskDialogOpen}
           onOpenChange={setIsNewTaskDialogOpen}
         />
