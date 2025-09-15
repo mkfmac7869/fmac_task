@@ -206,28 +206,11 @@ const ClickUpTaskPanel = ({
           title: "File Attached",
           description: `${file.name} has been successfully uploaded.`,
         });
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error uploading file:', error);
-        console.error('Error details:', error.message, error.code);
-        
-        let errorMessage = "Failed to upload the file. Please try again.";
-        
-        // Provide more specific error messages
-        if (error.code === 'storage/unauthorized') {
-          errorMessage = "You don't have permission to upload files. Please check your authentication.";
-        } else if (error.code === 'storage/canceled') {
-          errorMessage = "Upload was cancelled.";
-        } else if (error.code === 'storage/unknown') {
-          errorMessage = `Upload failed: ${error.message}`;
-        } else if (error.code === 'storage/bucket-not-found') {
-          errorMessage = "Storage bucket not configured correctly. Please contact support.";
-        } else if (error.code === 'storage/quota-exceeded') {
-          errorMessage = "Storage quota exceeded.";
-        }
-        
         toast({
           title: "Upload Failed",
-          description: errorMessage,
+          description: "Failed to upload the file. Please try again.",
           variant: "destructive"
         });
       }
