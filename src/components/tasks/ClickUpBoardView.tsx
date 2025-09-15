@@ -43,71 +43,94 @@ interface BoardColumn {
   bgColor: string;
   borderColor: string;
   icon: React.ReactNode;
+  gradient: string;
+  headerGradient: string;
+  hoverGradient: string;
 }
 
 const columns: BoardColumn[] = [
   {
     id: TaskStatus.TODO,
     title: 'To Do',
-    color: 'text-gray-700',
-    bgColor: 'bg-gray-50',
-    borderColor: 'border-gray-200',
-    icon: <Circle className="h-4 w-4 text-gray-500" />
+    color: 'text-slate-700',
+    bgColor: 'bg-gradient-to-br from-slate-50 to-gray-50',
+    borderColor: 'border-slate-200',
+    icon: <Circle className="h-4 w-4 text-slate-500" />,
+    gradient: 'from-slate-100 to-gray-100',
+    headerGradient: 'bg-gradient-to-r from-slate-100 via-gray-50 to-slate-100',
+    hoverGradient: 'hover:from-slate-100 hover:to-gray-200'
   },
   {
     id: TaskStatus.IN_PROGRESS,
     title: 'In Progress',
     color: 'text-blue-700',
-    bgColor: 'bg-blue-50',
+    bgColor: 'bg-gradient-to-br from-blue-50 to-indigo-50',
     borderColor: 'border-blue-200',
-    icon: <PlayCircle className="h-4 w-4 text-blue-600" />
+    icon: <PlayCircle className="h-4 w-4 text-blue-600" />,
+    gradient: 'from-blue-100 to-indigo-100',
+    headerGradient: 'bg-gradient-to-r from-blue-100 via-indigo-50 to-blue-100',
+    hoverGradient: 'hover:from-blue-100 hover:to-indigo-200'
   },
   {
     id: TaskStatus.IN_REVIEW,
     title: 'In Review',
-    color: 'text-yellow-700',
-    bgColor: 'bg-yellow-50',
-    borderColor: 'border-yellow-200',
-    icon: <Clock className="h-4 w-4 text-yellow-600" />
+    color: 'text-amber-700',
+    bgColor: 'bg-gradient-to-br from-amber-50 to-yellow-50',
+    borderColor: 'border-amber-200',
+    icon: <Clock className="h-4 w-4 text-amber-600" />,
+    gradient: 'from-amber-100 to-yellow-100',
+    headerGradient: 'bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100',
+    hoverGradient: 'hover:from-amber-100 hover:to-yellow-200'
   },
   {
     id: TaskStatus.COMPLETED,
     title: 'Completed',
-    color: 'text-green-700',
-    bgColor: 'bg-green-50',
-    borderColor: 'border-green-200',
-    icon: <CheckCircle2 className="h-4 w-4 text-green-600" />
+    color: 'text-emerald-700',
+    bgColor: 'bg-gradient-to-br from-emerald-50 to-green-50',
+    borderColor: 'border-emerald-200',
+    icon: <CheckCircle2 className="h-4 w-4 text-emerald-600" />,
+    gradient: 'from-emerald-100 to-green-100',
+    headerGradient: 'bg-gradient-to-r from-emerald-100 via-green-50 to-emerald-100',
+    hoverGradient: 'hover:from-emerald-100 hover:to-green-200'
   }
 ];
 
 const priorityConfig = {
   [TaskPriority.URGENT]: { 
-    color: 'border-l-red-700', 
+    color: 'border-l-red-600', 
     width: 'border-l-4',
-    flagColor: 'text-red-700',
-    bgColor: 'bg-red-100',
-    fill: true
+    flagColor: 'text-red-600',
+    bgColor: 'bg-gradient-to-r from-red-50 to-rose-50',
+    fill: true,
+    cardGradient: 'hover:shadow-red-200/50',
+    iconBg: 'bg-red-100'
   },
   [TaskPriority.HIGH]: { 
-    color: 'border-l-yellow-600', 
+    color: 'border-l-amber-500', 
     width: 'border-l-4',
-    flagColor: 'text-yellow-600',
-    bgColor: 'bg-yellow-100',
-    fill: true
+    flagColor: 'text-amber-600',
+    bgColor: 'bg-gradient-to-r from-amber-50 to-yellow-50',
+    fill: true,
+    cardGradient: 'hover:shadow-amber-200/50',
+    iconBg: 'bg-amber-100'
   },
   [TaskPriority.MEDIUM]: { 
-    color: 'border-l-blue-600', 
+    color: 'border-l-blue-500', 
     width: 'border-l-4',
     flagColor: 'text-blue-600',
-    bgColor: 'bg-blue-100',
-    fill: false
+    bgColor: 'bg-gradient-to-r from-blue-50 to-indigo-50',
+    fill: false,
+    cardGradient: 'hover:shadow-blue-200/50',
+    iconBg: 'bg-blue-100'
   },
   [TaskPriority.LOW]: { 
     color: 'border-l-gray-400', 
     width: 'border-l-2',
     flagColor: 'text-gray-500',
-    bgColor: 'bg-gray-100',
-    fill: false
+    bgColor: 'bg-gradient-to-r from-gray-50 to-slate-50',
+    fill: false,
+    cardGradient: 'hover:shadow-gray-200/50',
+    iconBg: 'bg-gray-100'
   },
 };
 
@@ -174,12 +197,14 @@ const ClickUpBoardView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpBoardView
         onMouseEnter={() => setHoveredCard(task.id)}
         onMouseLeave={() => setHoveredCard(null)}
         className={cn(
-          "bg-white rounded-lg border shadow-sm hover:shadow-md transition-all cursor-move",
+          "bg-white/90 backdrop-blur-sm rounded-lg border shadow-sm hover:shadow-lg transition-all cursor-move",
           "p-3 mb-2",
           priorityStyle?.color,
           priorityStyle?.width,
-          draggedTask === task.id && "opacity-50 cursor-grabbing",
-          hoveredCard === task.id && "transform -translate-y-0.5",
+          "hover:bg-gradient-to-br hover:from-white hover:to-gray-50",
+          priorityStyle?.cardGradient,
+          draggedTask === task.id && "opacity-50 cursor-grabbing scale-105",
+          hoveredCard === task.id && "transform -translate-y-0.5 shadow-lg",
           draggedOverTask === task.id && draggedTask !== task.id && "border-t-2 border-t-red-500 mt-8"
         )}
       >
@@ -286,9 +311,9 @@ const ClickUpBoardView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpBoardView
 
         {/* Progress bar */}
         <div className="mt-3">
-          <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-gray-200/50 rounded-full overflow-hidden backdrop-blur-sm">
             <div
-              className="h-full bg-red-600 rounded-full transition-all"
+              className="h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full transition-all duration-500 shadow-sm"
               style={{ width: `${task.progress}%` }}
             />
           </div>
@@ -298,7 +323,7 @@ const ClickUpBoardView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpBoardView
   };
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 px-4">
+    <div className="flex gap-4 overflow-x-auto pb-4 px-4 bg-gradient-to-br from-gray-50 via-white to-gray-50 min-h-full">
       {columns.map((column) => {
         const columnTasks = getTasksByStatus(column.id);
         const isDragOver = dragOverColumn === column.id;
@@ -313,19 +338,25 @@ const ClickUpBoardView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpBoardView
           >
             {/* Column header */}
             <div className={cn(
-              "rounded-t-lg border-t border-l border-r p-3",
-              column.bgColor,
-              column.borderColor
+              "rounded-t-lg p-4 backdrop-blur-sm shadow-sm",
+              column.headerGradient,
+              "border border-white/20"
             )}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {column.icon}
-                  <h3 className={cn("font-medium text-sm", column.color)}>
+                  <div className={cn("p-1.5 rounded-lg", column.bgColor)}>
+                    {column.icon}
+                  </div>
+                  <h3 className={cn("font-semibold text-sm", column.color)}>
                     {column.title}
                   </h3>
                   <Badge
                     variant="secondary"
-                    className="h-5 px-1.5 text-xs bg-white/70"
+                    className={cn(
+                      "h-5 px-2 text-xs font-medium",
+                      "bg-white/80 backdrop-blur-sm",
+                      "shadow-sm"
+                    )}
                   >
                     {columnTasks.length}
                   </Badge>
@@ -351,9 +382,11 @@ const ClickUpBoardView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpBoardView
 
             {/* Column content */}
             <div className={cn(
-              "border-l border-r border-b rounded-b-lg p-2 min-h-[calc(100vh-300px)] transition-all duration-200 relative",
-              column.borderColor,
-              isDragOver && "bg-red-50 border-red-300"
+              "rounded-b-lg p-3 min-h-[calc(100vh-300px)] transition-all duration-200 relative",
+              "bg-gradient-to-b", column.gradient,
+              "border border-t-0 border-white/20",
+              "shadow-inner",
+              isDragOver && "ring-2 ring-red-500 ring-opacity-50 bg-red-50/20"
             )}>
               {/* Drop zone indicator */}
               {isDragOver && draggedTask && (
@@ -366,7 +399,11 @@ const ClickUpBoardView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpBoardView
               {/* Add task button */}
               <Button
                 variant="ghost"
-                className="w-full h-8 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 mt-2"
+                className={cn(
+                  "w-full h-8 text-sm mt-2 transition-all duration-200",
+                  "hover:bg-white/60 backdrop-blur-sm",
+                  column.color
+                )}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Add task

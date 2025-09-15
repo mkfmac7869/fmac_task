@@ -45,52 +45,70 @@ interface GroupedTasks {
     icon: React.ReactNode;
     color: string;
     bgColor: string;
+    headerGradient?: string;
+    borderColor?: string;
   };
 }
 
 const statusConfig = {
   [TaskStatus.TODO]: { 
     icon: <Circle className="h-4 w-4" />, 
-    color: 'text-gray-500',
-    bgColor: 'bg-gray-50'
+    color: 'text-slate-600',
+    bgColor: 'bg-gradient-to-r from-slate-50 to-gray-50',
+    headerGradient: 'bg-gradient-to-r from-slate-100 to-gray-100',
+    borderColor: 'border-slate-200'
   },
   [TaskStatus.IN_PROGRESS]: { 
     icon: <PlayCircle className="h-4 w-4" />, 
     color: 'text-blue-600',
-    bgColor: 'bg-blue-50'
+    bgColor: 'bg-gradient-to-r from-blue-50 to-indigo-50',
+    headerGradient: 'bg-gradient-to-r from-blue-100 to-indigo-100',
+    borderColor: 'border-blue-200'
   },
   [TaskStatus.IN_REVIEW]: { 
     icon: <Clock className="h-4 w-4" />, 
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-50'
+    color: 'text-amber-600',
+    bgColor: 'bg-gradient-to-r from-amber-50 to-yellow-50',
+    headerGradient: 'bg-gradient-to-r from-amber-100 to-yellow-100',
+    borderColor: 'border-amber-200'
   },
   [TaskStatus.COMPLETED]: { 
     icon: <CheckCircle2 className="h-4 w-4" />, 
-    color: 'text-green-600',
-    bgColor: 'bg-green-50'
+    color: 'text-emerald-600',
+    bgColor: 'bg-gradient-to-r from-emerald-50 to-green-50',
+    headerGradient: 'bg-gradient-to-r from-emerald-100 to-green-100',
+    borderColor: 'border-emerald-200'
   }
 };
 
 const priorityConfig = {
   [TaskPriority.URGENT]: { 
     icon: <Flag className="h-3.5 w-3.5 fill-current" />, 
-    color: 'text-red-700',
-    bgColor: 'bg-red-100'
+    color: 'text-red-600',
+    bgColor: 'bg-gradient-to-r from-red-50 to-rose-50',
+    iconBg: 'bg-red-100',
+    borderColor: 'border-red-200'
   },
   [TaskPriority.HIGH]: { 
     icon: <Flag className="h-3.5 w-3.5 fill-current" />, 
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-100'
+    color: 'text-amber-600',
+    bgColor: 'bg-gradient-to-r from-amber-50 to-yellow-50',
+    iconBg: 'bg-amber-100',
+    borderColor: 'border-amber-200'
   },
   [TaskPriority.MEDIUM]: { 
     icon: <Flag className="h-3.5 w-3.5" />, 
     color: 'text-blue-600',
-    bgColor: 'bg-blue-100'
+    bgColor: 'bg-gradient-to-r from-blue-50 to-indigo-50',
+    iconBg: 'bg-blue-100',
+    borderColor: 'border-blue-200'
   },
   [TaskPriority.LOW]: { 
     icon: <Flag className="h-3.5 w-3.5" />, 
     color: 'text-gray-500',
-    bgColor: 'bg-gray-100'
+    bgColor: 'bg-gradient-to-r from-gray-50 to-slate-50',
+    iconBg: 'bg-gray-100',
+    borderColor: 'border-gray-200'
   },
 };
 
@@ -106,28 +124,36 @@ const ClickUpListView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpListViewPr
       tasks: tasks.filter(t => t.status === TaskStatus.TODO),
       icon: statusConfig[TaskStatus.TODO].icon,
       color: statusConfig[TaskStatus.TODO].color,
-      bgColor: statusConfig[TaskStatus.TODO].bgColor
+      bgColor: statusConfig[TaskStatus.TODO].bgColor,
+      headerGradient: statusConfig[TaskStatus.TODO].headerGradient,
+      borderColor: statusConfig[TaskStatus.TODO].borderColor
     },
     [TaskStatus.IN_PROGRESS]: {
       title: 'In Progress',
       tasks: tasks.filter(t => t.status === TaskStatus.IN_PROGRESS),
       icon: statusConfig[TaskStatus.IN_PROGRESS].icon,
       color: statusConfig[TaskStatus.IN_PROGRESS].color,
-      bgColor: statusConfig[TaskStatus.IN_PROGRESS].bgColor
+      bgColor: statusConfig[TaskStatus.IN_PROGRESS].bgColor,
+      headerGradient: statusConfig[TaskStatus.IN_PROGRESS].headerGradient,
+      borderColor: statusConfig[TaskStatus.IN_PROGRESS].borderColor
     },
     [TaskStatus.IN_REVIEW]: {
       title: 'In Review',
       tasks: tasks.filter(t => t.status === TaskStatus.IN_REVIEW),
       icon: statusConfig[TaskStatus.IN_REVIEW].icon,
       color: statusConfig[TaskStatus.IN_REVIEW].color,
-      bgColor: statusConfig[TaskStatus.IN_REVIEW].bgColor
+      bgColor: statusConfig[TaskStatus.IN_REVIEW].bgColor,
+      headerGradient: statusConfig[TaskStatus.IN_REVIEW].headerGradient,
+      borderColor: statusConfig[TaskStatus.IN_REVIEW].borderColor
     },
     [TaskStatus.COMPLETED]: {
       title: 'Completed',
       tasks: tasks.filter(t => t.status === TaskStatus.COMPLETED),
       icon: statusConfig[TaskStatus.COMPLETED].icon,
       color: statusConfig[TaskStatus.COMPLETED].color,
-      bgColor: statusConfig[TaskStatus.COMPLETED].bgColor
+      bgColor: statusConfig[TaskStatus.COMPLETED].bgColor,
+      headerGradient: statusConfig[TaskStatus.COMPLETED].headerGradient,
+      borderColor: statusConfig[TaskStatus.COMPLETED].borderColor
     }
   };
 
@@ -148,7 +174,7 @@ const ClickUpListView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpListViewPr
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Column headers */}
-      <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-100 bg-gray-50 text-xs font-medium text-gray-600">
+      <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-gray-50 via-white to-gray-50 text-xs font-semibold text-gray-700 shadow-sm">
         <div className="col-span-4">Name</div>
         <div className="col-span-2">Assignee</div>
         <div className="col-span-2">Project</div>
@@ -166,27 +192,30 @@ const ClickUpListView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpListViewPr
             {/* Group header */}
             <div
               className={cn(
-                "flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors",
-                "hover:bg-gray-50",
-                expandedGroups.has(groupId) && group.bgColor
+                "flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200",
+                "hover:shadow-sm",
+                expandedGroups.has(groupId) ? group.headerGradient : "hover:bg-gray-50",
+                "backdrop-blur-sm"
               )}
               onClick={() => toggleGroup(groupId)}
             >
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-5 w-5 p-0"
+                className="h-5 w-5 p-0 hover:bg-white/50"
               >
                 {expandedGroups.has(groupId) ? (
-                  <ChevronDown className="h-3.5 w-3.5" />
+                  <ChevronDown className="h-3.5 w-3.5 transition-transform" />
                 ) : (
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <ChevronRight className="h-3.5 w-3.5 transition-transform" />
                 )}
               </Button>
               <div className={cn("flex items-center gap-2", group.color)}>
-                {group.icon}
-                <span className="font-medium text-sm">{group.title}</span>
-                <span className="text-xs text-gray-500 font-normal">{group.tasks.length}</span>
+                <div className={cn("p-1 rounded", group.bgColor)}>
+                  {group.icon}
+                </div>
+                <span className="font-semibold text-sm">{group.title}</span>
+                <span className="text-xs text-gray-500 font-normal bg-white/60 px-2 py-0.5 rounded-full">{group.tasks.length}</span>
               </div>
             </div>
 
@@ -200,9 +229,9 @@ const ClickUpListView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpListViewPr
                     <div
                       key={task.id}
                       className={cn(
-                        "grid grid-cols-12 gap-4 px-4 py-3 border-t border-gray-50",
-                        "hover:bg-gray-50 cursor-pointer transition-colors group",
-                        hoveredTask === task.id && "bg-gray-50"
+                        "grid grid-cols-12 gap-4 px-4 py-3 border-t border-gray-100/50",
+                        "hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/30 cursor-pointer transition-all duration-200 group",
+                        hoveredTask === task.id && "bg-gradient-to-r from-gray-50 to-gray-50/30 shadow-sm"
                       )}
                       onMouseEnter={() => setHoveredTask(task.id)}
                       onMouseLeave={() => setHoveredTask(null)}
@@ -309,11 +338,15 @@ const ClickUpListView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpListViewPr
                       <div className="col-span-2 flex items-center">
                         {priority && (
                           <div className={cn(
-                            "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium",
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium",
+                            "shadow-sm backdrop-blur-sm transition-all duration-200",
+                            "hover:shadow-md",
                             priority.color,
                             priority.bgColor
                           )}>
-                            {priority.icon}
+                            <div className={cn("p-0.5 rounded", priority.iconBg)}>
+                              {priority.icon}
+                            </div>
                             <span className="capitalize">{task.priority}</span>
                           </div>
                         )}
