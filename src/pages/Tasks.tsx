@@ -11,6 +11,9 @@ import ClickUpListView from '@/components/tasks/ClickUpListView';
 import ClickUpTableView from '@/components/tasks/ClickUpTableView';
 import ClickUpBoardView from '@/components/tasks/ClickUpBoardView';
 import ClickUpTaskPanel from '@/components/tasks/ClickUpTaskPanel';
+import MobileTaskListView from '@/components/tasks/MobileTaskListView';
+import MobileTaskHeader from '@/components/tasks/MobileTaskHeader';
+import MobileTaskPanel from '@/components/tasks/MobileTaskPanel';
 import { TaskStatus, Task } from '@/types/task';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -72,10 +75,55 @@ const Tasks = () => {
     });
   };
 
+  if (isMobile) {
+    return (
+      <Layout>
+        <div className="h-full flex flex-col bg-gray-50">
+          {/* Mobile Header */}
+          <MobileTaskHeader 
+            taskCount={tasks.length}
+            onMenuClick={() => {
+              // Handle menu click if needed
+            }}
+          />
+          
+          {/* Mobile Task List */}
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+            </div>
+          ) : (
+            <MobileTaskListView 
+              tasks={tasks}
+              onTaskClick={handleViewTask}
+              onUpdateTask={handleUpdateTask}
+              onNewTask={() => setIsNewTaskDialogOpen(true)}
+            />
+          )}
+          
+          {/* New Task Dialog */}
+          <EnhancedNewTaskDialog 
+            isOpen={isNewTaskDialogOpen}
+            onOpenChange={setIsNewTaskDialogOpen}
+          />
+          
+          {/* Task Details Panel */}
+          <MobileTaskPanel
+            task={selectedTask}
+            isOpen={isPanelOpen}
+            onClose={handleClosePanel}
+            onUpdateTask={handlePanelUpdateTask}
+            onDeleteTask={handleDeleteTask}
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="h-full flex flex-col bg-gray-50">
-        {/* ClickUp Style Header */}
+        {/* Desktop Header */}
         <ClickUpTaskHeader 
           onNewTask={() => setIsNewTaskDialogOpen(true)}
           taskCount={tasks.length}
@@ -90,7 +138,7 @@ const Tasks = () => {
           <ClickUpViewSwitcher 
             currentView={viewMode}
             onViewChange={setViewMode}
-            availableViews={isMobile ? ['list'] : ['list', 'board', 'table']}
+            availableViews={['list', 'board', 'table']}
           />
         </div>
         
@@ -103,7 +151,7 @@ const Tasks = () => {
           ) : (
             <div className="p-4">
               {/* List View */}
-              {effectiveViewMode === 'list' && (
+              {viewMode === 'list' && (
                 <ClickUpListView 
                   tasks={tasks}
                   onTaskClick={handleViewTask}
@@ -112,7 +160,7 @@ const Tasks = () => {
               )}
               
               {/* Table View */}
-              {effectiveViewMode === 'table' && (
+              {viewMode === 'table' && (
                 <ClickUpTableView 
                   tasks={tasks}
                   onTaskClick={handleViewTask}
@@ -121,7 +169,7 @@ const Tasks = () => {
               )}
               
               {/* Board View */}
-              {effectiveViewMode === 'board' && (
+              {viewMode === 'board' && (
                 <ClickUpBoardView 
                   tasks={tasks}
                   onTaskClick={handleViewTask}
