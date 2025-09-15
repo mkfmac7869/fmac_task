@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Bell, Lock, User, Globe, Moon, Sun, Upload } from 'lucide-react';
-import AdminUtils from '@/components/AdminUtils';
 
 const Settings = () => {
   const { user, updateProfile, logout } = useAuth();
@@ -145,12 +144,11 @@ const Settings = () => {
         <h1 className="text-2xl font-bold mb-6">Settings</h1>
         
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full md:w-auto md:inline-flex grid-cols-5 mb-6">
+          <TabsList className="grid w-full md:w-auto md:inline-flex grid-cols-4 mb-6">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
-            <TabsTrigger value="admin">Admin</TabsTrigger>
           </TabsList>
           
           {/* Profile Tab */}
@@ -459,13 +457,6 @@ const Settings = () => {
                 </Button>
               </CardFooter>
             </Card>
-          </TabsContent>
-          
-          {/* Admin Tab */}
-          <TabsContent value="admin">
-            <div className="space-y-6">
-              <AdminUtils />
-            </div>
           </TabsContent>
         </Tabs>
       </div>
