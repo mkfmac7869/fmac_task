@@ -177,7 +177,7 @@ export const useFirebaseAuth = () => {
   };
 
   // Register function
-  const register = async (email: string, password: string, name: string, department: string) => {
+  const register = async (email: string, password: string, name: string) => {
     setLoading(true);
 
     try {
@@ -189,39 +189,32 @@ export const useFirebaseAuth = () => {
         displayName: name
       });
 
-      // Create user profile in Firestore with approval system
+      // Create user profile in Firestore - all users are auto-approved now
       const isAdmin = email === 'mkfmac7@gmail.com' || email === 'mk7869148e@gmail.com';
       const userProfile = {
         name: name,
         email: email,
         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ea384c&color=fff`,
         roles: isAdmin ? ['admin'] : ['member'],
-        department: department,
-        isApproved: isAdmin, // Admin emails are auto-approved
-        approvedBy: isAdmin ? firebaseUser.uid : null,
-        approvedAt: isAdmin ? new Date() : null,
+        department: isAdmin ? 'Management' : 'General',
+        isApproved: true, // All users are auto-approved
+        approvedBy: 'auto',
+        approvedAt: new Date(),
         createdAt: new Date()
       };
 
       await setDoc(doc(db, 'profiles', firebaseUser.uid), userProfile);
 
-      // If admin, convert to our User type and set state
-      if (isAdmin) {
-        const userData = await convertFirebaseUser(firebaseUser);
-        setUser(userData);
-        
-        toast({
-          title: "Registration successful",
-          description: "Your account has been created",
-        });
-        
-        navigate('/dashboard');
-      } else {
-        // For regular users, sign them out and show approval message
-        await signOut(auth);
-        setUser(null);
-        // Don't navigate to dashboard, let the signup page handle the success message
-      }
+      // Convert to our User type and set state
+      const userData = await convertFirebaseUser(firebaseUser);
+      setUser(userData);
+      
+      toast({
+        title: "Registration successful",
+        description: "Your account has been created. You can now log in.",
+      });
+      
+      navigate('/login');
     } catch (error: any) {
       console.error('Registration error:', error);
       setLoading(false);

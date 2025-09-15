@@ -23,7 +23,7 @@ export interface AuthContextType {
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => void;
   register: (email: string, password: string, name: string) => Promise<void>;
-  signup: (email: string, password: string, name: string, department: string) => Promise<void>;
+  signup: (email: string, password: string, name: string) => Promise<void>;
   updateProfile: (userData: Partial<User>) => void;
   loading: boolean;
   isLoading: boolean;

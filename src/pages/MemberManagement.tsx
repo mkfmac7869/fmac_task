@@ -4,7 +4,6 @@ import Layout from '@/components/Layout';
 import MemberHeader from '@/components/member/MemberHeader';
 import MemberContent from '@/components/member/MemberContent';
 import MemberFormDialog from '@/components/member/MemberFormDialog';
-import PendingApprovals from '@/components/member/PendingApprovals';
 import { useMemberManagement } from '@/hooks/memberManagement';
 import { FirebaseService } from '@/lib/firebaseService';
 import { useAuth } from '@/context/AuthContext';
@@ -92,11 +91,6 @@ const MemberManagement = () => {
           onRefresh={handleRefresh}
           isRefreshing={isLoading}
         />
-        
-        {/* Pending Approvals - Only show for admin and head roles */}
-        {(user?.roles.includes('admin') || user?.roles.includes('head')) && (
-          <PendingApprovals />
-        )}
         
         {/* Content Component */}
         <MemberContent 
