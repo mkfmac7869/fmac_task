@@ -177,14 +177,12 @@ const ClickUpTaskDetails = () => {
       })));
 
       // Load attachments from Firebase - this is the source of truth
-      console.log('Loading attachments for task:', taskId);
       const attachmentsData = await FirebaseService.getDocuments('attachments', [
         { field: 'taskId', operator: '==', value: taskId }
       ]);
-      console.log('Found attachments from Firestore:', attachmentsData.length, attachmentsData);
       
       // Always use attachments from Firestore as the source of truth
-      const processedAttachments = attachmentsData.map((a: any) => ({
+      setAttachments(attachmentsData.map((a: any) => ({
         id: a.id,
         name: a.name,
         size: a.size,
@@ -192,9 +190,7 @@ const ClickUpTaskDetails = () => {
         url: a.url,
         uploadedBy: a.uploadedBy,
         uploadedAt: a.uploadedAt
-      }));
-      console.log('Setting attachments state:', processedAttachments);
-      setAttachments(processedAttachments);
+      })));
 
       // Load activities from Firebase - try multiple approaches
       console.log('=== LOADING ACTIVITIES ===');
@@ -641,49 +637,60 @@ const ClickUpTaskDetails = () => {
 
   const handleDeleteAttachment = async (attachmentToDelete: Attachment) => {
     try {
+      // Immediately remove from UI
+      setAttachments(prev => prev.filter(att => att.id !== attachmentToDelete.id));
+      
       toast({
         title: "Deleting attachment...",
         description: "Please wait while we remove the file.",
       });
 
-      // Find the attachment metadata in Firestore
-      const attachmentDocs = await FirebaseService.getDocuments('attachments', [
-        { field: 'taskId', operator: '==', value: task.id },
-        { field: 'id', operator: '==', value: attachmentToDelete.id }
-      ]);
-
-      // Delete from Firebase Storage if we have the file path
-      if (attachmentDocs.length > 0 && attachmentDocs[0].filePath) {
-        try {
-          await FirebaseService.deleteFile(attachmentDocs[0].filePath);
-        } catch (storageError) {
-          console.error('Error deleting file from storage:', storageError);
+      // Delete from backend
+      try {
+        // Get all attachments for this task
+        const allAttachmentDocs = await FirebaseService.getDocuments('attachments', [
+          { field: 'taskId', operator: '==', value: task.id }
+        ]);
+        
+        // Find the one to delete
+        const toDelete = allAttachmentDocs.find(doc => 
+          doc.id === attachmentToDelete.id || 
+          (doc.name === attachmentToDelete.name && doc.url === attachmentToDelete.url)
+        );
+        
+        if (toDelete) {
+          // Delete from storage
+          if (toDelete.filePath) {
+            try {
+              await FirebaseService.deleteFile(toDelete.filePath);
+            } catch (e) {
+              console.error('Storage deletion failed:', e);
+            }
+          }
+          
+          // Delete from Firestore
+          await FirebaseService.deleteDocument('attachments', toDelete.id);
         }
         
-        // Delete the metadata from Firestore
-        await FirebaseService.deleteDocument('attachments', attachmentDocs[0].id);
+        // Add activity
+        await addActivity('attachment', `removed ${attachmentToDelete.name}`);
+      } catch (error) {
+        console.error('Error during deletion:', error);
       }
-
-      // Add activity
-      await addActivity('attachment', `removed ${attachmentToDelete.name}`);
-
-      // Clear the attachment from state immediately for better UX
-      setAttachments(prev => prev.filter(att => att.id !== attachmentToDelete.id));
-      
-      // Then reload all data from Firestore to ensure consistency
-      await loadTaskRelatedData(task.id, task);
 
       toast({
         title: "Attachment Deleted",
-        description: "The file has been successfully removed.",
+        description: "The file has been removed.",
       });
     } catch (error) {
       console.error('Error deleting attachment:', error);
       toast({
         title: "Delete Failed",
-        description: "Failed to delete the attachment. Please try again.",
+        description: "Failed to delete the attachment.",
         variant: "destructive"
       });
+      // Reload to restore correct state
+      await loadTaskRelatedData(task.id, task);
     }
   };
 

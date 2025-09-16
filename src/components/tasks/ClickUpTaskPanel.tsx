@@ -109,30 +109,19 @@ const ClickUpTaskPanel = ({
   const loadAttachments = useCallback(async () => {
     if (!task) return;
     try {
-      console.log('Loading attachments for task:', task.id);
       const attachmentsData = await FirebaseService.getDocuments('attachments', [
         { field: 'taskId', operator: '==', value: task.id }
       ]);
-      console.log('Found attachments:', attachmentsData.length);
-      console.log('Raw attachment data from Firestore:', attachmentsData);
       
-      const processedAttachments = attachmentsData.map((a: any) => {
-        // Use the Firestore document ID as the attachment ID
-        const attachment = {
-          id: a.id, // This is the Firestore document ID
-          name: a.name,
-          size: a.size,
-          type: a.type,
-          url: a.url,
-          uploadedBy: a.uploadedBy,
-          uploadedAt: a.uploadedAt
-        };
-        console.log('Processed attachment:', attachment);
-        return attachment;
-      });
-      
-      console.log('Setting attachments state with:', processedAttachments);
-      setAttachments(processedAttachments);
+      setAttachments(attachmentsData.map((a: any) => ({
+        id: a.id, // This is the Firestore document ID
+        name: a.name,
+        size: a.size,
+        type: a.type,
+        url: a.url,
+        uploadedBy: a.uploadedBy,
+        uploadedAt: a.uploadedAt
+      })));
     } catch (error) {
       console.error('Error loading attachments:', error);
     }
@@ -229,8 +218,7 @@ const ClickUpTaskPanel = ({
         };
         
         // Save attachment metadata to Firestore
-        const savedDoc = await FirebaseService.addDocument('attachments', attachmentData);
-        console.log('Saved attachment with Firestore ID:', savedDoc.id);
+        await FirebaseService.addDocument('attachments', attachmentData);
         
         // Just reload attachments from Firestore to get the new attachment
         await loadAttachments();
@@ -279,78 +267,58 @@ const ClickUpTaskPanel = ({
 
   const handleDeleteAttachment = async (attachmentToDelete: Attachment) => {
     try {
-      console.log('=== DELETING ATTACHMENT ===');
-      console.log('Attachment to delete:', attachmentToDelete);
-      console.log('Current attachments before delete:', attachments);
+      // Immediately remove from UI
+      setAttachments(current => current.filter(att => att.id !== attachmentToDelete.id));
       
-      // Show loading toast
       toast({
         title: "Deleting attachment...",
         description: "Please wait while we remove the file.",
       });
 
-      // Find the attachment metadata in Firestore using a more flexible approach
-      const allAttachmentDocs = await FirebaseService.getDocuments('attachments', [
-        { field: 'taskId', operator: '==', value: task.id }
-      ]);
-      
-      console.log('All attachment docs for this task:', allAttachmentDocs);
-      
-      // Find the specific attachment to delete
-      const attachmentDocs = allAttachmentDocs.filter(doc => 
-        doc.id === attachmentToDelete.id || 
-        doc.name === attachmentToDelete.name
-      );
-      
-      console.log('Matched attachment docs to delete:', attachmentDocs);
-
-      // Delete all matching attachment documents
-      for (const attachmentDoc of attachmentDocs) {
-        console.log('Deleting attachment document:', attachmentDoc.id);
+      // Delete from Firestore
+      try {
+        // Get all attachments for this task
+        const allAttachmentDocs = await FirebaseService.getDocuments('attachments', [
+          { field: 'taskId', operator: '==', value: task.id }
+        ]);
         
-        // Delete from Firebase Storage if we have the file path
-        if (attachmentDoc.filePath) {
-          try {
-            await FirebaseService.deleteFile(attachmentDoc.filePath);
-            console.log('Deleted file from storage');
-          } catch (storageError) {
-            console.error('Error deleting file from storage:', storageError);
-            // Continue even if storage deletion fails
+        // Find the one to delete by matching ID or name
+        const toDelete = allAttachmentDocs.find(doc => 
+          doc.id === attachmentToDelete.id || 
+          (doc.name === attachmentToDelete.name && doc.url === attachmentToDelete.url)
+        );
+        
+        if (toDelete) {
+          // Delete from storage
+          if (toDelete.filePath) {
+            try {
+              await FirebaseService.deleteFile(toDelete.filePath);
+            } catch (e) {
+              console.error('Storage deletion failed:', e);
+            }
           }
+          
+          // Delete from Firestore
+          await FirebaseService.deleteDocument('attachments', toDelete.id);
         }
-        
-        // Delete the metadata from Firestore
-        await FirebaseService.deleteDocument('attachments', attachmentDoc.id);
-        console.log('Deleted attachment metadata from Firestore');
+      } catch (error) {
+        console.error('Error during deletion:', error);
+        // Even if deletion fails, don't add it back to UI
       }
-
-      // Clear attachments first to show immediate feedback
-      console.log('Clearing attachment from state...');
-      setAttachments(prev => {
-        const filtered = prev.filter(att => att.id !== attachmentToDelete.id);
-        console.log('Attachments after filtering:', filtered);
-        return filtered;
-      });
-      
-      // Force a small delay to ensure state update
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Then reload from Firestore to ensure consistency
-      console.log('Reloading attachments from Firestore...');
-      await loadAttachments();
-      console.log('=== DELETE COMPLETE ===');
 
       toast({
         title: "Attachment Deleted",
-        description: "The file has been successfully removed.",
+        description: "The file has been removed.",
       });
     } catch (error) {
       console.error('Error deleting attachment:', error);
       toast({
         title: "Delete Failed",
-        description: "Failed to delete the attachment. Please try again.",
+        description: "Failed to delete the attachment.",
         variant: "destructive"
       });
+      // Reload to restore correct state
+      await loadAttachments();
     }
   };
 
