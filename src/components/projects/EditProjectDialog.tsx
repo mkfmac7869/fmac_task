@@ -332,7 +332,7 @@ const EditProjectDialog = ({ project, isOpen, onOpenChange }: EditProjectDialogP
                         return true;
                       }
                       return member.department === formData.departmentId;
-                    }).length === 0 && (
+                    }).length === 0 && formData.departmentId && (
                       <div className="text-center py-4 text-sm text-gray-500">
                         No members found in selected department
                       </div>

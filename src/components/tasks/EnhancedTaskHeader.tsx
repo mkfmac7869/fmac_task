@@ -32,6 +32,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { TaskFilters, SortConfig } from '@/hooks/useTaskFilters';
+import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
 import { TaskPriority } from '@/types/task';
 import { useTask } from '@/context/TaskContext';
 
@@ -59,6 +60,7 @@ const EnhancedTaskHeader = ({
   availableTags
 }: EnhancedTaskHeaderProps) => {
   const { projects } = useTask();
+  const { users } = useFetchMembers();
   const [showFilters, setShowFilters] = useState(false);
 
   return (
@@ -150,6 +152,15 @@ const EnhancedTaskHeader = ({
                   <Label className="text-sm font-medium mb-2">Assignment</Label>
                   <div className="space-y-2 mt-2">
                     <Button
+                      variant={filters.assignee === 'all' ? 'default' : 'outline'}
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => updateFilter('assignee', 'all')}
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      All members
+                    </Button>
+                    <Button
                       variant={filters.assignee === 'me' ? 'default' : 'outline'}
                       size="sm"
                       className="w-full justify-start"
@@ -167,6 +178,31 @@ const EnhancedTaskHeader = ({
                       <User className="h-4 w-4 mr-2 text-gray-400" />
                       Unassigned
                     </Button>
+                    
+                    {/* Specific Members */}
+                    {users && users.length > 0 && (
+                      <div className="border-t pt-2 mt-2">
+                        <Label className="text-xs text-gray-500 mb-1 block">Filter by member:</Label>
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                          {users.map((user) => (
+                            <Button
+                              key={user.id}
+                              variant={filters.assignee === user.id ? 'default' : 'outline'}
+                              size="sm"
+                              className="w-full justify-start text-xs h-7"
+                              onClick={() => updateFilter('assignee', filters.assignee === user.id ? 'all' : user.id)}
+                            >
+                              <img 
+                                src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`}
+                                alt={user.name}
+                                className="h-3 w-3 rounded-full mr-2"
+                              />
+                              {user.name}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

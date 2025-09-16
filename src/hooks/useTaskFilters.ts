@@ -7,7 +7,7 @@ export interface TaskFilters {
   search: string;
   status: TaskStatus | 'all';
   priority: TaskPriority | 'all';
-  assignee: 'all' | 'me' | 'unassigned';
+  assignee: 'all' | 'me' | 'unassigned' | string;
   dueDate: 'all' | 'today' | 'tomorrow' | 'overdue' | 'this_week';
   project: string | 'all';
   tags: string[];
@@ -85,11 +85,22 @@ export const useTaskFilters = (tasks: Task[]) => {
       }
 
       // Assignee filter
-      if (filters.assignee === 'me' && task.assignee?.id !== user?.id) {
-        return false;
-      }
-      if (filters.assignee === 'unassigned' && task.assignee) {
-        return false;
+      if (filters.assignee !== 'all') {
+        if (filters.assignee === 'me') {
+          // Check if user is assigned (either in assignees array or old assignee field)
+          const isAssignedToUser = task.assignee?.id === user?.id || 
+            (task.assignees && task.assignees.some(assignee => assignee.id === user?.id));
+          if (!isAssignedToUser) return false;
+        } else if (filters.assignee === 'unassigned') {
+          // Task is unassigned if no assignee and no assignees
+          const hasAssignee = task.assignee || (task.assignees && task.assignees.length > 0);
+          if (hasAssignee) return false;
+        } else {
+          // Specific member ID filter
+          const isAssignedToMember = task.assignee?.id === filters.assignee || 
+            (task.assignees && task.assignees.some(assignee => assignee.id === filters.assignee));
+          if (!isAssignedToMember) return false;
+        }
       }
 
       // Due date filter
