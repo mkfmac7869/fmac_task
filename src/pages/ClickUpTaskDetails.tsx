@@ -637,8 +637,8 @@ const ClickUpTaskDetails = () => {
 
   const handleDeleteAttachment = async (attachmentToDelete: Attachment) => {
     try {
-      // Immediately remove from UI
-      setAttachments(prev => prev.filter(att => att.id !== attachmentToDelete.id));
+      // Force immediate UI update - clear all attachments first
+      setAttachments([]);
       
       toast({
         title: "Deleting attachment...",
@@ -677,6 +677,9 @@ const ClickUpTaskDetails = () => {
       } catch (error) {
         console.error('Error during deletion:', error);
       }
+
+      // Force reload all data from Firestore
+      await loadTaskRelatedData(task.id, task);
 
       toast({
         title: "Attachment Deleted",
