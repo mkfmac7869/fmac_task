@@ -58,13 +58,28 @@ export const useTeamMembers = () => {
       // Fetch all profiles for admin, only department profiles for others
       let usersData;
       
-      if (user.role !== 'admin' && user.department) {
+      console.log("Current user role check:", {
+        userRole: user.role,
+        userRoles: user.roles,
+        isAdmin: user.role === 'admin' || user.roles?.includes('admin'),
+        userDepartment: user.department
+      });
+      
+      // Check both user.role and user.roles for admin access
+      const isAdmin = user.role === 'admin' || user.roles?.includes('admin');
+      
+      if (!isAdmin && user.department) {
+        console.log("Non-admin user - fetching department members only");
         usersData = await UserService.getUsersByDepartment(user.department);
       } else {
+        console.log("Admin user - fetching ALL members");
         usersData = await UserService.getUsers();
       }
 
-      console.info("Team member data fetched:", usersData);
+      console.info("Team member data fetched:", {
+        count: usersData?.length || 0,
+        members: usersData?.map(u => ({ id: u.id, name: u.name, department: u.department, role: u.role })) || []
+      });
       if (usersData && usersData.length > 0) {
         // Transform data for display
         const formattedMembers = usersData.map((member) => {
