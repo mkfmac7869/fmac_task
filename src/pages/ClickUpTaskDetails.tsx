@@ -1795,7 +1795,7 @@ const ClickUpTaskDetails = () => {
                   <div>
                     <label className="text-sm text-gray-500 mb-1 block">Tags</label>
                     <div className="flex flex-wrap gap-2">
-                      {task.tags.map((tag, idx) => (
+                      {(Array.isArray(task.tags) ? task.tags : []).map((tag, idx) => (
                         <Badge key={idx} variant="secondary" className="bg-gray-100">
                           {tag}
                         </Badge>

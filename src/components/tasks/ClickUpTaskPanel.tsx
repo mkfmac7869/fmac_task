@@ -144,7 +144,7 @@ const ClickUpTaskPanel = ({
     if (task) {
       setComments(task.comments || []);
       // Don't initialize attachments from task - we'll load from Firestore
-      setTags(task.tags || []);
+      setTags(Array.isArray(task.tags) ? task.tags : []);
       loadAttachments();
     }
   }, [task, loadAttachments]);

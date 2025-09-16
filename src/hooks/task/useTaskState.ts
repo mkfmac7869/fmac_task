@@ -225,7 +225,7 @@ export const useTaskState = () => {
               assignees: parseJSON(task.assignees) || [],
               creator: creator,
               createdAt: task.created_at,
-              tags: task.tags || [],
+              tags: Array.isArray(task.tags) ? task.tags : (parseJSON(task.tags) || []),
               comments: parseJSON(task.comments) || [],
               attachments: [], // Attachments are loaded separately from attachments collection
               subtasks: parseJSON(task.subtasks) || [],
