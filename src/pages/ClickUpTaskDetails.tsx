@@ -636,6 +636,10 @@ const ClickUpTaskDetails = () => {
   };
 
   const handleDeleteAttachment = async (attachmentToDelete: Attachment) => {
+    console.log('=== DELETING ATTACHMENT ===');
+    console.log('Attachment to delete:', attachmentToDelete);
+    console.log('Task ID:', task.id);
+    
     // Remove from UI immediately - no waiting
     setAttachments(prev => prev.filter(att => att.id !== attachmentToDelete.id));
     
@@ -650,26 +654,38 @@ const ClickUpTaskDetails = () => {
         { field: 'taskId', operator: '==', value: task.id }
       ]);
       
+      console.log('All attachment docs:', allAttachmentDocs);
+      console.log('Looking for attachment with ID:', attachmentToDelete.id);
+      
       const toDelete = allAttachmentDocs.find(doc => 
         doc.id === attachmentToDelete.id || 
         (doc.name === attachmentToDelete.name && doc.url === attachmentToDelete.url)
       );
       
+      console.log('Found document to delete:', toDelete);
+      
       if (toDelete) {
+        console.log('Deleting from Firestore with ID:', toDelete.id);
+        await FirebaseService.deleteDocument('attachments', toDelete.id);
+        console.log('Successfully deleted from Firestore');
+        
         if (toDelete.filePath) {
           try {
+            console.log('Deleting from storage:', toDelete.filePath);
             await FirebaseService.deleteFile(toDelete.filePath);
+            console.log('Successfully deleted from storage');
           } catch (e) {
-            // Ignore storage errors
+            console.error('Storage deletion failed:', e);
           }
         }
-        await FirebaseService.deleteDocument('attachments', toDelete.id);
+      } else {
+        console.log('No matching document found to delete');
       }
       
       // Add activity
       await addActivity('attachment', `removed ${attachmentToDelete.name}`);
     } catch (error) {
-      // Ignore backend errors - UI is already updated
+      console.error('Error during deletion:', error);
     }
   };
 
