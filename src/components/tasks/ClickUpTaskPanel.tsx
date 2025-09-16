@@ -1164,6 +1164,74 @@ const ClickUpTaskPanel = ({
               </div>
             )}
           </div>
+
+          {/* Completion Evidence - Show only if task is completed */}
+          {task.status === TaskStatus.COMPLETED && task.completionEvidence && (
+            <div className="mb-8">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Completion Evidence</h3>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                      {task.completionEvidence}
+                    </p>
+                    {task.completedBy && (
+                      <div className="flex items-center gap-2 mt-3 text-xs text-gray-600">
+                        <span>Completed by:</span>
+                        <div className="flex items-center gap-1">
+                          <Avatar className="h-3 w-3">
+                            <AvatarImage src={task.completedBy.avatar} />
+                            <AvatarFallback className="text-xs">{task.completedBy.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span>{task.completedBy.name}</span>
+                        </div>
+                        {task.completedAt && (
+                          <>
+                            <span>•</span>
+                            <span>{format(new Date(task.completedAt), 'MMM d, h:mm a')}</span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Completion Attachments */}
+              {task.completionAttachments && task.completionAttachments.length > 0 && (
+                <div className="mt-3">
+                  <h4 className="text-xs font-medium text-gray-600 mb-2">Supporting Documents</h4>
+                  <div className="space-y-2">
+                    {task.completionAttachments.map((attachment) => (
+                      <div 
+                        key={attachment.id}
+                        className="flex items-center justify-between p-2 bg-white border border-green-200 rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          {getFileIcon(attachment.type)}
+                          <div>
+                            <p className="text-xs font-medium truncate max-w-[200px]">{attachment.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {formatFileSize(attachment.size)}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={() => window.open(attachment.url, '_blank')}
+                        >
+                          <Download className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
       

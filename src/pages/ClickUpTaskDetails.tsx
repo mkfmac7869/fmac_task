@@ -1803,6 +1803,74 @@ const ClickUpTaskDetails = () => {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* Completion Evidence - Show only if task is completed */}
+                  {task.status === TaskStatus.COMPLETED && task.completionEvidence && (
+                    <div className="border-t pt-4 mt-4">
+                      <label className="text-sm text-gray-500 mb-2 block">Completion Evidence</label>
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                              {task.completionEvidence}
+                            </p>
+                            {task.completedBy && (
+                              <div className="flex items-center gap-2 mt-3 text-xs text-gray-600">
+                                <span>Completed by:</span>
+                                <div className="flex items-center gap-1">
+                                  <Avatar className="h-4 w-4">
+                                    <AvatarImage src={task.completedBy.avatar} />
+                                    <AvatarFallback>{task.completedBy.name.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  <span>{task.completedBy.name}</span>
+                                </div>
+                                {task.completedAt && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{format(new Date(task.completedAt), 'MMM d, yyyy h:mm a')}</span>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Completion Attachments */}
+                      {task.completionAttachments && task.completionAttachments.length > 0 && (
+                        <div className="mt-3">
+                          <label className="text-sm text-gray-500 mb-2 block">Supporting Documents</label>
+                          <div className="space-y-2">
+                            {task.completionAttachments.map((attachment) => (
+                              <div 
+                                key={attachment.id}
+                                className="flex items-center justify-between p-3 bg-white border border-green-200 rounded-lg"
+                              >
+                                <div className="flex items-center gap-3">
+                                  {getFileIcon(attachment.type)}
+                                  <div>
+                                    <p className="text-sm font-medium">{attachment.name}</p>
+                                    <p className="text-xs text-gray-500">
+                                      {formatFileSize(attachment.size)} • {attachment.uploadedBy}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => window.open(attachment.url, '_blank')}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
