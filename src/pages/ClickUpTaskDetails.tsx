@@ -184,48 +184,88 @@ const ClickUpTaskDetails = () => {
         })));
       }
 
-      // Load activities from Firebase
-      const activitiesData = await FirebaseService.getDocumentsOrdered(
-        'activities',
-        'timestamp',
-        'desc',
-        [{ field: 'taskId', operator: '==', value: taskId }]
-      );
+      // Load activities from Firebase - try multiple approaches
+      console.log('Loading activities for taskId:', taskId);
       
-      console.log('Loaded activities:', activitiesData);
-      
-      if (activitiesData && activitiesData.length > 0) {
-        setActivities(activitiesData.map((a: any) => ({
-          id: a.id,
-          type: a.type || 'status_change',
-          userId: a.userId || a.user_id,
-          userName: a.userName || 'Unknown User',
-          userAvatar: a.userAvatar || '/placeholder.svg',
-          description: a.description || a.action || 'made changes',
-          oldValue: a.oldValue,
-          newValue: a.newValue,
-          timestamp: a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp)
-        })));
-      } else {
-        // If no activities exist, create the initial "created" activity
-        const createdActivity: Activity = {
-          id: Date.now().toString(),
-          type: 'status_change',
-          userId: task?.creator?.id || 'system',
-          userName: task?.creator?.name || 'System',
-          userAvatar: task?.creator?.avatar || '/placeholder.svg',
-          description: 'created this task',
-          timestamp: new Date(task?.createdAt || Date.now())
-        };
+      try {
+        // First try with getDocumentsOrdered
+        const activitiesData = await FirebaseService.getDocumentsOrdered(
+          'activities',
+          'timestamp',
+          'desc',
+          [{ field: 'taskId', operator: '==', value: taskId }]
+        );
         
-        // Save the initial activity
-        await FirebaseService.addDocument('activities', {
-          ...createdActivity,
-          taskId: taskId,
-          timestamp: createdActivity.timestamp
-        });
+        console.log('Activities query result:', activitiesData);
         
-        setActivities([createdActivity]);
+        // Also try a simple getDocuments query as backup
+        if (!activitiesData || activitiesData.length === 0) {
+          console.log('Trying alternative query...');
+          const altActivities = await FirebaseService.getDocuments('activities', [
+            { field: 'taskId', operator: '==', value: taskId }
+          ]);
+          console.log('Alternative query result:', altActivities);
+          
+          if (altActivities && altActivities.length > 0) {
+            // Sort by timestamp manually
+            altActivities.sort((a: any, b: any) => {
+              const aTime = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+              const bTime = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+              return bTime.getTime() - aTime.getTime();
+            });
+            
+            setActivities(altActivities.map((a: any) => ({
+              id: a.id,
+              type: a.type || 'status_change',
+              userId: a.userId || a.user_id,
+              userName: a.userName || 'Unknown User',
+              userAvatar: a.userAvatar || '/placeholder.svg',
+              description: a.description || a.action || 'made changes',
+              oldValue: a.oldValue,
+              newValue: a.newValue,
+              timestamp: a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp)
+            })));
+            return;
+          }
+        }
+        
+        if (activitiesData && activitiesData.length > 0) {
+          setActivities(activitiesData.map((a: any) => ({
+            id: a.id,
+            type: a.type || 'status_change',
+            userId: a.userId || a.user_id,
+            userName: a.userName || 'Unknown User',
+            userAvatar: a.userAvatar || '/placeholder.svg',
+            description: a.description || a.action || 'made changes',
+            oldValue: a.oldValue,
+            newValue: a.newValue,
+            timestamp: a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp)
+          })));
+        } else {
+          // If no activities exist, create the initial "created" activity
+          console.log('No activities found, creating initial activity...');
+          const createdActivity: Activity = {
+            id: Date.now().toString(),
+            type: 'status_change',
+            userId: task?.creator?.id || user?.id || 'system',
+            userName: task?.creator?.name || user?.name || 'System',
+            userAvatar: task?.creator?.avatar || user?.avatar || '/placeholder.svg',
+            description: 'created this task',
+            timestamp: new Date(task?.createdAt || Date.now())
+          };
+          
+          // Save the initial activity
+          const savedActivity = await FirebaseService.addDocument('activities', {
+            ...createdActivity,
+            taskId: taskId,
+            timestamp: createdActivity.timestamp
+          });
+          
+          console.log('Created initial activity:', savedActivity);
+          setActivities([{ ...createdActivity, id: savedActivity.id }]);
+        }
+      } catch (error) {
+        console.error('Error loading activities:', error);
       }
     } catch (error) {
       console.error('Error loading task data:', error);
@@ -361,7 +401,7 @@ const ClickUpTaskDetails = () => {
     }
   };
 
-  const handleAddSubtask = () => {
+  const handleAddSubtask = async () => {
     if (newSubtaskTitle.trim() && task) {
       const subtask: SubTask = {
         id: Date.now().toString(),
@@ -372,6 +412,7 @@ const ClickUpTaskDetails = () => {
       const updatedSubtasks = [...subtasks, subtask];
       setSubtasks(updatedSubtasks);
       updateTask(task.id, { subtasks: updatedSubtasks });
+      await addActivity('status_change', `added subtask "${newSubtaskTitle}"`);
       setNewSubtaskTitle('');
       setIsAddingSubtask(false);
       toast({
@@ -381,17 +422,22 @@ const ClickUpTaskDetails = () => {
     }
   };
 
-  const toggleSubtask = (subtaskId: string) => {
+  const toggleSubtask = async (subtaskId: string) => {
     if (task) {
-      const updatedSubtasks = subtasks.map(st => 
-        st.id === subtaskId ? { ...st, completed: !st.completed } : st
-      );
-      setSubtasks(updatedSubtasks);
-      updateTask(task.id, { subtasks: updatedSubtasks });
+      const subtask = subtasks.find(st => st.id === subtaskId);
+      if (subtask) {
+        const updatedSubtasks = subtasks.map(st => 
+          st.id === subtaskId ? { ...st, completed: !st.completed } : st
+        );
+        setSubtasks(updatedSubtasks);
+        updateTask(task.id, { subtasks: updatedSubtasks });
+        const action = !subtask.completed ? 'completed' : 'uncompleted';
+        await addActivity('status_change', `${action} subtask "${subtask.title}"`);
+      }
     }
   };
 
-  const handleAddChecklist = () => {
+  const handleAddChecklist = async () => {
     if (newChecklistTitle.trim() && task) {
       const checklist: Checklist = {
         id: Date.now().toString(),
@@ -401,14 +447,16 @@ const ClickUpTaskDetails = () => {
       const updatedChecklists = [...checklists, checklist];
       setChecklists(updatedChecklists);
       updateTask(task.id, { checklists: updatedChecklists });
+      await addActivity('status_change', `added checklist "${newChecklistTitle}"`);
       setNewChecklistTitle('');
       setIsAddingChecklist(false);
     }
   };
 
-  const addChecklistItem = (checklistId: string) => {
+  const addChecklistItem = async (checklistId: string) => {
     const itemText = newChecklistItems[checklistId];
     if (itemText?.trim() && task) {
+      const checklist = checklists.find(cl => cl.id === checklistId);
       const updatedChecklists = checklists.map(cl => {
         if (cl.id === checklistId) {
           return {
@@ -424,12 +472,18 @@ const ClickUpTaskDetails = () => {
       });
       setChecklists(updatedChecklists);
       updateTask(task.id, { checklists: updatedChecklists });
+      if (checklist) {
+        await addActivity('status_change', `added item "${itemText.trim()}" to checklist "${checklist.title}"`);
+      }
       setNewChecklistItems({ ...newChecklistItems, [checklistId]: '' });
     }
   };
 
-  const toggleChecklistItem = (checklistId: string, itemId: string) => {
+  const toggleChecklistItem = async (checklistId: string, itemId: string) => {
     if (task) {
+      const checklist = checklists.find(cl => cl.id === checklistId);
+      const item = checklist?.items.find(i => i.id === itemId);
+      
       const updatedChecklists = checklists.map(cl => {
         if (cl.id === checklistId) {
           return {
@@ -443,6 +497,11 @@ const ClickUpTaskDetails = () => {
       });
       setChecklists(updatedChecklists);
       updateTask(task.id, { checklists: updatedChecklists });
+      
+      if (checklist && item) {
+        const action = !item.completed ? 'completed' : 'uncompleted';
+        await addActivity('status_change', `${action} checklist item "${item.content}" in "${checklist.title}"`);
+      }
     }
   };
 
