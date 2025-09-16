@@ -639,9 +639,11 @@ const ClickUpTaskDetails = () => {
     console.log('=== DELETING ATTACHMENT ===');
     console.log('Attachment to delete:', attachmentToDelete);
     console.log('Task ID:', task.id);
+    console.log('Current attachments before deletion:', attachments);
     
-    // Remove from UI immediately - no waiting
-    setAttachments(prev => prev.filter(att => att.id !== attachmentToDelete.id));
+    // FORCE CLEAR ALL ATTACHMENTS IMMEDIATELY
+    setAttachments([]);
+    console.log('Cleared all attachments from UI');
     
     toast({
       title: "Attachment Deleted",
@@ -684,6 +686,23 @@ const ClickUpTaskDetails = () => {
       
       // Add activity
       await addActivity('attachment', `removed ${attachmentToDelete.name}`);
+      
+      // FORCE RELOAD attachments from Firestore
+      console.log('Reloading attachments from Firestore...');
+      const updatedAttachments = await FirebaseService.getDocuments('attachments', [
+        { field: 'taskId', operator: '==', value: task.id }
+      ]);
+      console.log('Updated attachments from Firestore:', updatedAttachments);
+      setAttachments(updatedAttachments.map((a: any) => ({
+        id: a.id,
+        name: a.name,
+        size: a.size,
+        type: a.type,
+        url: a.url,
+        uploadedBy: a.uploadedBy,
+        uploadedAt: a.uploadedAt
+      })));
+      console.log('Set attachments to:', updatedAttachments.map((a: any) => a.name));
     } catch (error) {
       console.error('Error during deletion:', error);
     }
