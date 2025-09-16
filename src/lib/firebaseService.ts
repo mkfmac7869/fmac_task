@@ -255,10 +255,16 @@ export class FirebaseService {
 export const TaskService = {
   // Add task activity
   addActivity: async (taskId: string, userId: string, action: string, details?: any) => {
-    return FirebaseService.addDocument('task_activities', {
-      task_id: taskId,
-      user_id: userId,
+    return FirebaseService.addDocument('activities', {
+      taskId: taskId,
+      userId: userId,
       action,
+      type: details?.type || 'status_change',
+      description: action,
+      userName: details?.userName || 'Unknown User',
+      userAvatar: details?.userAvatar || '/placeholder.svg',
+      oldValue: details?.oldValue,
+      newValue: details?.newValue,
       details: details || {},
       timestamp: serverTimestamp()
     });
@@ -266,8 +272,8 @@ export const TaskService = {
 
   // Get task activities
   getActivities: async (taskId: string) => {
-    return FirebaseService.getDocuments('task_activities', [
-      { field: 'task_id', operator: '==', value: taskId }
+    return FirebaseService.getDocuments('activities', [
+      { field: 'taskId', operator: '==', value: taskId }
     ]);
   }
 };

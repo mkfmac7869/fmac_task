@@ -66,6 +66,12 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { FirebaseService } from '@/lib/firebaseService';
 import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
 
@@ -182,14 +188,23 @@ const ClickUpTaskDetails = () => {
       const activitiesData = await FirebaseService.getDocumentsOrdered(
         'activities',
         'timestamp',
-        'asc',
+        'desc',
         [{ field: 'taskId', operator: '==', value: taskId }]
       );
       
+      console.log('Loaded activities:', activitiesData);
+      
       if (activitiesData && activitiesData.length > 0) {
         setActivities(activitiesData.map((a: any) => ({
-          ...a,
-          timestamp: a.timestamp?.toDate() || new Date()
+          id: a.id,
+          type: a.type || 'status_change',
+          userId: a.userId || a.user_id,
+          userName: a.userName || 'Unknown User',
+          userAvatar: a.userAvatar || '/placeholder.svg',
+          description: a.description || a.action || 'made changes',
+          oldValue: a.oldValue,
+          newValue: a.newValue,
+          timestamp: a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp)
         })));
       } else {
         // If no activities exist, create the initial "created" activity
@@ -284,7 +299,7 @@ const ClickUpTaskDetails = () => {
       type,
       userId: user?.id || '',
       userName: user?.name || 'Unknown User',
-      userAvatar: user?.avatar || '/placeholder.svg',
+      userAvatar: user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}`,
       description,
       oldValue,
       newValue,
@@ -293,14 +308,17 @@ const ClickUpTaskDetails = () => {
     
     try {
       // Save to Firebase
-      await FirebaseService.addDocument('activities', {
+      const result = await FirebaseService.addDocument('activities', {
         ...activity,
         taskId: task.id,
         timestamp: activity.timestamp
       });
       
-      // Update local state
-      setActivities(prev => [...prev, activity]);
+      // Update with the real ID from Firebase
+      activity.id = result.id;
+      
+      // Update local state - add to beginning for latest first
+      setActivities(prev => [activity, ...prev]);
     } catch (error) {
       console.error('Error saving activity:', error);
     }
@@ -1282,10 +1300,33 @@ const ClickUpTaskDetails = () => {
                   {/* Due date */}
                   <div>
                     <label className="text-sm text-gray-500 mb-1 block">Due date</label>
-                    <Button variant="outline" className="w-full justify-start">
-                      <Calendar className="h-3.5 w-3.5 mr-2" />
-                      {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'Set due date'}
-                    </Button>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Calendar className="h-3.5 w-3.5 mr-2" />
+                          {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'Set due date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={task.dueDate ? new Date(task.dueDate) : undefined}
+                          onSelect={async (date) => {
+                            if (date) {
+                              const oldDate = task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'No due date';
+                              const newDate = format(date, 'MMM d, yyyy');
+                              updateTask(task.id, { dueDate: date.toISOString() });
+                              await addActivity('status_change', `changed due date from ${oldDate} to ${newDate}`, task.dueDate, date.toISOString());
+                              toast({
+                                title: "Due Date Updated",
+                                description: `Due date set to ${newDate}`,
+                              });
+                            }
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   {/* Priority */}

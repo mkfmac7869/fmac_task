@@ -38,7 +38,12 @@ export const useAddTask = (setTasks: React.Dispatch<React.SetStateAction<Task[]>
       const result = await FirebaseService.addDocument('tasks', taskData);
       
       // Record task creation activity
-      await TaskService.addActivity(result.id, user.id, 'created', { title: newTask.title });
+      await TaskService.addActivity(result.id, user.id, 'created this task', { 
+        type: 'status_change',
+        userName: user.name,
+        userAvatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`,
+        title: newTask.title 
+      });
       
       const createdTask: Task = {
         ...newTask,

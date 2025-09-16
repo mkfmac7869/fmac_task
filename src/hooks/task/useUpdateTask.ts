@@ -56,32 +56,91 @@ export const useUpdateTask = (tasks: Task[], setTasks: React.Dispatch<React.SetS
       await FirebaseService.updateDocument('tasks', id, dbFields);
       
       // Track specific changes for activities
+      if (updatedFields.title && updatedFields.title !== existingTask.title) {
+        await TaskService.addActivity(id, user.id, `changed title from "${existingTask.title}" to "${updatedFields.title}"`, {
+          type: 'status_change',
+          userName: user.name,
+          userAvatar: user.avatar,
+          oldValue: existingTask.title,
+          newValue: updatedFields.title,
+        });
+      }
+      
+      if (updatedFields.description !== undefined && updatedFields.description !== existingTask.description) {
+        await TaskService.addActivity(id, user.id, 'updated the description', {
+          type: 'status_change',
+          userName: user.name,
+          userAvatar: user.avatar,
+        });
+      }
+      
+      if (updatedFields.dueDate && updatedFields.dueDate !== existingTask.dueDate) {
+        const oldDate = existingTask.dueDate ? new Date(existingTask.dueDate).toLocaleDateString() : 'No due date';
+        const newDate = new Date(updatedFields.dueDate).toLocaleDateString();
+        await TaskService.addActivity(id, user.id, `changed due date from ${oldDate} to ${newDate}`, {
+          type: 'status_change',
+          userName: user.name,
+          userAvatar: user.avatar,
+          oldValue: existingTask.dueDate,
+          newValue: updatedFields.dueDate,
+        });
+      }
+      
+      if (updatedFields.projectId !== undefined && updatedFields.projectId !== existingTask.projectId) {
+        await TaskService.addActivity(id, user.id, 'changed the project', {
+          type: 'status_change',
+          userName: user.name,
+          userAvatar: user.avatar,
+        });
+      }
+      
+      if (updatedFields.tags && JSON.stringify(updatedFields.tags) !== JSON.stringify(existingTask.tags)) {
+        await TaskService.addActivity(id, user.id, 'updated tags', {
+          type: 'status_change',
+          userName: user.name,
+          userAvatar: user.avatar,
+        });
+      }
       if (updatedFields.status && updatedFields.status !== existingTask.status) {
-        await TaskService.addActivity(id, user.id, 'updated', {
-          target: 'status',
-          value: updatedFields.status,
+        await TaskService.addActivity(id, user.id, `changed status from ${existingTask.status} to ${updatedFields.status}`, {
+          type: 'status_change',
+          userName: user.name,
+          userAvatar: user.avatar,
+          oldValue: existingTask.status,
+          newValue: updatedFields.status,
         });
       }
       
       if (updatedFields.priority && updatedFields.priority !== existingTask.priority) {
-        await TaskService.addActivity(id, user.id, 'updated', {
-          target: 'priority',
-          value: updatedFields.priority,
+        await TaskService.addActivity(id, user.id, `changed priority from ${existingTask.priority} to ${updatedFields.priority}`, {
+          type: 'status_change',
+          userName: user.name,
+          userAvatar: user.avatar,
+          oldValue: existingTask.priority,
+          newValue: updatedFields.priority,
         });
       }
       
       if (updatedFields.progress !== undefined && updatedFields.progress !== existingTask.progress) {
-        await TaskService.addActivity(id, user.id, 'updated', {
-          target: 'progress',
-          value: `${updatedFields.progress}%`,
+        await TaskService.addActivity(id, user.id, `updated progress from ${existingTask.progress}% to ${updatedFields.progress}%`, {
+          type: 'progress',
+          userName: user.name,
+          userAvatar: user.avatar,
+          oldValue: existingTask.progress.toString(),
+          newValue: updatedFields.progress.toString(),
         });
       }
       
       if (updatedFields.assignee && 
           (!existingTask.assignee || updatedFields.assignee.id !== existingTask.assignee.id)) {
-        await TaskService.addActivity(id, user.id, 'assigned', {
-          target: 'task',
-          value: updatedFields.assignee.name,
+        const oldAssignee = existingTask.assignee?.name || 'Unassigned';
+        const newAssignee = updatedFields.assignee.name;
+        await TaskService.addActivity(id, user.id, `changed assignee from ${oldAssignee} to ${newAssignee}`, {
+          type: 'status_change',
+          userName: user.name,
+          userAvatar: user.avatar,
+          oldValue: oldAssignee,
+          newValue: newAssignee,
         });
       }
       
