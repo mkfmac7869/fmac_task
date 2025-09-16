@@ -52,7 +52,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useTask } from '@/context/TaskContext';
 import { toast } from '@/hooks/use-toast';
-import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
+import { useTaskAssignmentPermissions } from '@/hooks/useTaskAssignmentPermissions';
 import { FirebaseService } from '@/lib/firebaseService';
 import TaskCompletionDialog from '@/components/tasks/TaskCompletionDialog';
 import MultiAssigneeSelector from '@/components/tasks/MultiAssigneeSelector';
@@ -89,7 +89,7 @@ const ClickUpTaskPanel = ({
 }: ClickUpTaskPanelProps) => {
   const { user } = useAuth();
   const { projects } = useTask();
-  const { users, isLoading: isLoadingMembers } = useFetchMembers();
+  const { assignableUsers, isLoading: isLoadingMembers, permissionLevel } = useTaskAssignmentPermissions();
   const navigate = useNavigate();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
@@ -109,7 +109,9 @@ const ClickUpTaskPanel = ({
   // Completion Dialog
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   
-  const isAdmin = user?.roles?.includes('admin') || false;
+  const isAdmin = permissionLevel === 'admin';
+  const isDeptHead = permissionLevel === 'head';
+  const canAssignToOthers = isAdmin || isDeptHead;
 
   const loadAttachments = useCallback(async () => {
     if (!task) return;
@@ -625,7 +627,7 @@ const ClickUpTaskPanel = ({
               <div className="flex-1">
                 <MultiAssigneeSelector
                   selectedAssignees={task.assignees || []}
-                  availableMembers={users?.map(user => ({
+                  availableMembers={assignableUsers?.map(user => ({
                     id: user.id,
                     name: user.name,
                     avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`,
@@ -639,7 +641,7 @@ const ClickUpTaskPanel = ({
                       description: `Assignees updated: ${assigneeNames || 'none'}`,
                     });
                   }}
-                  isAdmin={isAdmin}
+                  isAdmin={canAssignToOthers}
                   disabled={isLoadingMembers}
                 />
               </div>

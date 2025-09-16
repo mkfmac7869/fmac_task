@@ -65,14 +65,21 @@ export const useTeamMembers = () => {
         userDepartment: user.department
       });
       
-      // Check both user.role and user.roles for admin access
+      // Check user role for member access permissions
       const isAdmin = user.role === 'admin' || user.roles?.includes('admin');
+      const isDeptHead = user.role === 'head' || user.roles?.includes('head');
       
-      if (!isAdmin && user.department) {
-        console.log("Non-admin user - fetching department members only");
+      if (isAdmin) {
+        console.log("Admin user - fetching ALL members");
+        usersData = await UserService.getUsers();
+      } else if (isDeptHead && user.department) {
+        console.log("Department Head - fetching department members only");
+        usersData = await UserService.getUsersByDepartment(user.department);
+      } else if (user.department) {
+        console.log("Regular member - fetching department members only");
         usersData = await UserService.getUsersByDepartment(user.department);
       } else {
-        console.log("Admin user - fetching ALL members");
+        console.log("User with no department - fetching all members");
         usersData = await UserService.getUsers();
       }
 

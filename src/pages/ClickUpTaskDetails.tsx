@@ -75,7 +75,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { FirebaseService, TaskService } from '@/lib/firebaseService';
 import TaskCompletionDialog from '@/components/tasks/TaskCompletionDialog';
 import MultiAssigneeSelector from '@/components/tasks/MultiAssigneeSelector';
-import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
+import { useTaskAssignmentPermissions } from '@/hooks/useTaskAssignmentPermissions';
 import { testActivitiesQuery } from '@/utils/testActivities';
 
 interface Activity {
@@ -109,7 +109,7 @@ const ClickUpTaskDetails = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { tasks, getTaskById, updateTask, deleteTask, projects, isLoading } = useTask();
-  const { users, isLoading: isLoadingMembers } = useFetchMembers();
+  const { assignableUsers, isLoading: isLoadingMembers, permissionLevel } = useTaskAssignmentPermissions();
   
   // State
   const [task, setTask] = useState<Task | undefined>(undefined);
@@ -121,7 +121,9 @@ const ClickUpTaskDetails = () => {
   const [tempProgress, setTempProgress] = useState(0);
   const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
   
-  const isAdmin = user?.roles?.includes('admin') || false;
+  const isAdmin = permissionLevel === 'admin';
+  const isDeptHead = permissionLevel === 'head';
+  const canAssignToOthers = isAdmin || isDeptHead;
   
   // Subtasks
   const [subtasks, setSubtasks] = useState<SubTask[]>([]);
@@ -1475,7 +1477,7 @@ const ClickUpTaskDetails = () => {
                     <label className="text-sm text-gray-500 mb-1 block">Assignees</label>
                     <MultiAssigneeSelector
                       selectedAssignees={task.assignees || []}
-                      availableMembers={users?.map(user => ({
+                      availableMembers={assignableUsers?.map(user => ({
                         id: user.id,
                         name: user.name,
                         avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`,
@@ -1490,7 +1492,7 @@ const ClickUpTaskDetails = () => {
                           description: `Assignees updated: ${assigneeNames || 'none'}`,
                         });
                       }}
-                      isAdmin={isAdmin}
+                      isAdmin={canAssignToOthers}
                       disabled={isLoadingMembers}
                     />
                     {/* Old single assignee - keeping for backward compatibility */}

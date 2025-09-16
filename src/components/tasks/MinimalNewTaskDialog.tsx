@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { TaskStatus, TaskPriority } from '@/types/task';
 import { format } from 'date-fns';
-import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
+import { useTaskAssignmentPermissions } from '@/hooks/useTaskAssignmentPermissions';
 import { Badge } from '@/components/ui/badge';
 // import { MultiAssigneeSelector } from './MultiAssigneeSelector';
 
@@ -103,7 +103,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onOpenChange }) => {
   const { addTask, projects } = useTask();
   const { user } = useAuth();
-  const { users, isLoading: isLoadingUsers } = useFetchMembers();
+  const { assignableUsers, isLoading: isLoadingUsers, permissionLevel } = useTaskAssignmentPermissions();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
@@ -115,7 +115,9 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
 
-  const isAdmin = user?.roles?.includes('admin') || false;
+  const isAdmin = permissionLevel === 'admin';
+  const isDeptHead = permissionLevel === 'head';
+  const canAssignToOthers = isAdmin || isDeptHead;
 
   // Reset assignees when dialog opens/closes
   useEffect(() => {
@@ -143,7 +145,7 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
     try {
       // Handle backward compatibility - if no assignees but we need to assign to self for non-admin
       let finalAssignees = assignees;
-      if (!isAdmin && assignees.length === 0 && user) {
+      if (!canAssignToOthers && assignees.length === 0 && user) {
         finalAssignees = [{
           id: user.id,
           name: user.name,
@@ -416,13 +418,13 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
             {/* Assignee (Simplified for deployment) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Assignee
+                Assignee {isDeptHead && <span className="text-xs text-gray-500">(Department members only)</span>}
               </label>
-              {isAdmin ? (
+              {canAssignToOthers ? (
                 <select
                   value={assignees.length > 0 ? assignees[0].id : ''}
                   onChange={(e) => {
-                    const selectedUser = users?.find(u => u.id === e.target.value);
+                    const selectedUser = assignableUsers?.find(u => u.id === e.target.value);
                     if (selectedUser) {
                       setAssignees([{
                         id: selectedUser.id,
@@ -438,7 +440,7 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
                   className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                 >
                   <option value="">Unassigned</option>
-                  {users?.map((user) => (
+                  {assignableUsers?.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.name}
                     </option>
