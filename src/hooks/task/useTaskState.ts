@@ -31,24 +31,41 @@ export const useTaskState = () => {
         
         if (!user.roles?.includes('admin')) {
           // Non-admin users can only see tasks assigned to them or created by them
-          // We need to make two separate queries and combine results
           console.log("Non-admin user - fetching tasks assigned to or created by user");
           
-          const assignedTasks = await FirebaseService.getDocuments('tasks', [
-            { field: 'assigned_to', operator: '==', value: user.id }
-          ]);
+          // Get all tasks first, then filter client-side for assignees array
+          const allTasks = await FirebaseService.getDocuments('tasks');
           
-          const createdTasks = await FirebaseService.getDocuments('tasks', [
-            { field: 'created_by', operator: '==', value: user.id }
-          ]);
+          // Filter tasks where user is assigned (either in assignees array or old assigned_to field) or created by user
+          const userTasks = allTasks.filter(task => {
+            // Check if user created the task
+            const isCreator = task.created_by === user.id;
+            
+            // Check if user is in old assigned_to field
+            const isAssignedTo = task.assigned_to === user.id;
+            
+            // Check if user is in new assignees array
+            let isInAssignees = false;
+            if (task.assignees) {
+              try {
+                const assignees = JSON.parse(task.assignees);
+                isInAssignees = Array.isArray(assignees) && assignees.some(assignee => assignee.id === user.id);
+              } catch (e) {
+                console.error("Error parsing assignees:", e);
+              }
+            }
+            
+            return isCreator || isAssignedTo || isInAssignees;
+          });
           
-          // Combine and deduplicate tasks
-          const allTasks = [...assignedTasks, ...createdTasks];
-          const uniqueTasks = allTasks.filter((task, index, self) => 
-            index === self.findIndex(t => t.id === task.id)
-          );
+          console.log("Filtered tasks for user:", {
+            userId: user.id,
+            totalTasks: allTasks.length,
+            userTasks: userTasks.length,
+            userTaskIds: userTasks.map(t => t.id)
+          });
           
-          data = uniqueTasks;
+          data = userTasks;
         } else {
           console.log("Admin user - fetching all tasks");
           console.log("Admin user - fetching ALL tasks");
