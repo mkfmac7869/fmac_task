@@ -248,6 +248,52 @@ const ClickUpTaskPanel = ({
     onUpdateTask(task.id, { tags: updatedTags });
   };
 
+  const handleDeleteAttachment = async (attachmentToDelete: Attachment) => {
+    try {
+      // Show loading toast
+      toast({
+        title: "Deleting attachment...",
+        description: "Please wait while we remove the file.",
+      });
+
+      // Find the attachment metadata in Firestore
+      const attachmentDocs = await FirebaseService.getDocuments('attachments', [
+        { field: 'taskId', operator: '==', value: task.id },
+        { field: 'id', operator: '==', value: attachmentToDelete.id }
+      ]);
+
+      // Delete from Firebase Storage if we have the file path
+      if (attachmentDocs.length > 0 && attachmentDocs[0].filePath) {
+        try {
+          await FirebaseService.deleteFile(attachmentDocs[0].filePath);
+        } catch (storageError) {
+          console.error('Error deleting file from storage:', storageError);
+          // Continue even if storage deletion fails
+        }
+        
+        // Delete the metadata from Firestore
+        await FirebaseService.deleteDocument('attachments', attachmentDocs[0].id);
+      }
+
+      // Update local state and task
+      const updatedAttachments = attachments.filter(att => att.id !== attachmentToDelete.id);
+      setAttachments(updatedAttachments);
+      onUpdateTask(task.id, { attachments: updatedAttachments });
+
+      toast({
+        title: "Attachment Deleted",
+        description: "The file has been successfully removed.",
+      });
+    } catch (error) {
+      console.error('Error deleting attachment:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete the attachment. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getFileIcon = (type: string) => {
     if (type.startsWith('image/')) return <Image className="h-4 w-4" />;
     if (type.includes('pdf')) return <FileText className="h-4 w-4" />;
@@ -839,14 +885,24 @@ const ClickUpTaskPanel = ({
                         </p>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => window.open(attachment.url, '_blank')}
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => window.open(attachment.url, '_blank')}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:text-red-600"
+                        onClick={() => handleDeleteAttachment(attachment)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
