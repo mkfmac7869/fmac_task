@@ -16,6 +16,7 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Tasks from './pages/Tasks';
 import ClickUpTaskDetails from './pages/ClickUpTaskDetails';
+import SimpleTaskDetails from './pages/SimpleTaskDetails';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/ProjectDetails';
 import Team from './pages/Team';
@@ -64,7 +65,7 @@ function App() {
             <Route element={<AuthGuard />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/tasks" element={<Tasks />} />
-              <Route path="/tasks/:taskId" element={<ClickUpTaskDetails />} />
+              <Route path="/tasks/:taskId" element={<SimpleTaskDetails />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/projects/:projectId" element={<ProjectDetails />} />
               <Route path="/team" element={<Team />} />
