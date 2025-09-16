@@ -1,0 +1,10 @@
+{
+  "authorizedDomains": [
+    "localhost",
+    "fmactasks.firebaseapp.com",
+    "fmac-task.vercel.app",
+    "tasks.fmac.dev",
+    "fmac.dev",
+    "vercel.app"
+  ]
+}

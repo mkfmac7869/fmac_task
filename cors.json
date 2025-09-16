@@ -1,0 +1,16 @@
+[
+  {
+    "origin": [
+      "https://tasks.fmac.dev",
+      "https://fmac.dev",
+      "https://fmac-task.vercel.app",
+      "https://*.vercel.app",
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:8082"
+    ],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "responseHeader": ["Content-Type", "Authorization", "X-Requested-With"],
+    "maxAgeSeconds": 3600
+  }
+]

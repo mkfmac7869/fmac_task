@@ -13,7 +13,8 @@ Google Sign-In fails on Vercel deployment with error: "Failed to sign in with Go
 4. Add your Vercel domains:
    - `fmac-task.vercel.app`
    - `*.vercel.app` (for preview deployments)
-   - Any custom domain you're using
+   - `tasks.fmac.dev` (your custom domain)
+   - `fmac.dev` (root domain)
 
 ### 2. Enable Google Sign-In Provider
 
