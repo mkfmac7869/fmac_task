@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { UserService } from '@/lib/firebaseService';
 
@@ -15,6 +15,7 @@ export const useTaskAssignmentPermissions = () => {
   const { user } = useAuth();
   const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Determine user's permission level
   const permissionLevel = useMemo(() => {
@@ -53,8 +54,11 @@ export const useTaskAssignmentPermissions = () => {
   };
 
   // Fetch assignable users based on permission level
-  const fetchAssignableUsers = async () => {
+  const fetchAssignableUsers = useCallback(async () => {
+    console.log("fetchAssignableUsers called", { user: user?.name, permissionLevel });
+    
     if (!user) {
+      console.log("No user found, setting empty assignable users");
       setAssignableUsers([]);
       setIsLoading(false);
       return;
@@ -113,23 +117,25 @@ export const useTaskAssignmentPermissions = () => {
       } else {
         setAssignableUsers([]);
       }
-    } catch (error) {
-      console.error("Error fetching assignable users:", error);
+    } catch (err) {
+      console.error("Error fetching assignable users:", err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
       setAssignableUsers([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, permissionLevel]);
 
   useEffect(() => {
     fetchAssignableUsers();
-  }, [user, permissionLevel]);
+  }, [fetchAssignableUsers]);
 
   return {
     assignableUsers,
     isLoading,
     permissionLevel,
     canAssignTo,
-    refetch: fetchAssignableUsers
+    refetch: fetchAssignableUsers,
+    error
   };
 };

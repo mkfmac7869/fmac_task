@@ -103,7 +103,12 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onOpenChange }) => {
   const { addTask, projects } = useTask();
   const { user } = useAuth();
-  const { assignableUsers, isLoading: isLoadingUsers, permissionLevel } = useTaskAssignmentPermissions();
+  const { assignableUsers, isLoading: isLoadingUsers, permissionLevel, error: assignmentError } = useTaskAssignmentPermissions();
+  
+  // Log assignment errors but don't crash
+  if (assignmentError) {
+    console.error("Assignment permissions error in NewTaskDialog:", assignmentError);
+  }
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);

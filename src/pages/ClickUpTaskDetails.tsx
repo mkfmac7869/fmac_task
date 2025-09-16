@@ -109,7 +109,12 @@ const ClickUpTaskDetails = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { tasks, getTaskById, updateTask, deleteTask, projects, isLoading } = useTask();
-  const { assignableUsers, isLoading: isLoadingMembers, permissionLevel } = useTaskAssignmentPermissions();
+  const { assignableUsers, isLoading: isLoadingMembers, permissionLevel, error: assignmentError } = useTaskAssignmentPermissions();
+  
+  // Fallback if assignment permissions hook fails
+  if (assignmentError) {
+    console.error("Assignment permissions error:", assignmentError);
+  }
   
   // State
   const [task, setTask] = useState<Task | undefined>(undefined);
@@ -338,7 +343,7 @@ const ClickUpTaskDetails = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingMembers) {
     return (
       <Layout>
         <div className="flex justify-center items-center h-full">

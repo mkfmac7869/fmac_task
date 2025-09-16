@@ -89,7 +89,12 @@ const ClickUpTaskPanel = ({
 }: ClickUpTaskPanelProps) => {
   const { user } = useAuth();
   const { projects } = useTask();
-  const { assignableUsers, isLoading: isLoadingMembers, permissionLevel } = useTaskAssignmentPermissions();
+  const { assignableUsers, isLoading: isLoadingMembers, permissionLevel, error: assignmentError } = useTaskAssignmentPermissions();
+  
+  // Log assignment errors but don't crash
+  if (assignmentError) {
+    console.error("Assignment permissions error in TaskPanel:", assignmentError);
+  }
   const navigate = useNavigate();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
