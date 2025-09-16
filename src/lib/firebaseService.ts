@@ -255,7 +255,7 @@ export class FirebaseService {
 export const TaskService = {
   // Add task activity
   addActivity: async (taskId: string, userId: string, action: string, details?: any) => {
-    return FirebaseService.addDocument('activities', {
+    const activityData: any = {
       taskId: taskId,
       userId: userId,
       action,
@@ -263,11 +263,19 @@ export const TaskService = {
       description: action,
       userName: details?.userName || 'Unknown User',
       userAvatar: details?.userAvatar || '/placeholder.svg',
-      oldValue: details?.oldValue,
-      newValue: details?.newValue,
       details: details || {},
       timestamp: serverTimestamp()
-    });
+    };
+
+    // Only add oldValue and newValue if they are not undefined
+    if (details?.oldValue !== undefined) {
+      activityData.oldValue = details.oldValue;
+    }
+    if (details?.newValue !== undefined) {
+      activityData.newValue = details.newValue;
+    }
+
+    return FirebaseService.addDocument('activities', activityData);
   },
 
   // Get task activities

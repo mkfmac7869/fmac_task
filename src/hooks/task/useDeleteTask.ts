@@ -19,8 +19,10 @@ export const useDeleteTask = (setTasks: React.Dispatch<React.SetStateAction<any[
     
     try {
       // Record activity before deleting
-      await TaskService.addActivity(id, user.id, 'deleted', {
-        target: 'task'
+      await TaskService.addActivity(id, user.id, 'deleted task', {
+        type: 'deletion',
+        userName: user.name || 'Unknown User',
+        userAvatar: user.avatar || '/placeholder.svg'
       });
       
       await FirebaseService.deleteDocument('tasks', id);
