@@ -74,7 +74,7 @@ import {
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { FirebaseService, TaskService } from '@/lib/firebaseService';
 import TaskCompletionDialog from '@/components/tasks/TaskCompletionDialog';
-import MultiAssigneeSelector from '@/components/tasks/MultiAssigneeSelector';
+import SimpleAssigneeSelector from '@/components/tasks/SimpleAssigneeSelector';
 import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
 import { testActivitiesQuery } from '@/utils/testActivities';
 
@@ -1483,24 +1483,14 @@ const ClickUpTaskDetails = () => {
                     )}
                   </div>
 
-                  {/* Multiple Assignees */}
+                  {/* Assignees */}
                   <div>
                     <label className="text-sm text-gray-500 mb-1 block">Assignees</label>
-                    <div className="flex flex-wrap gap-2">
-                      {assignees.length > 0 ? (
-                        assignees.map((assignee) => (
-                          <div key={assignee.id} className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded">
-                            <Avatar className="h-5 w-5">
-                              <AvatarImage src={assignee.avatar} />
-                              <AvatarFallback className="text-xs">{assignee.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">{assignee.name}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-400">No assignees</span>
-                      )}
-                    </div>
+                    <SimpleAssigneeSelector
+                      assignees={assignees}
+                      onAssigneesChange={handleAssigneesChange}
+                      isAdmin={isAdmin}
+                    />
                   </div>
 
                   {/* Due date */}
