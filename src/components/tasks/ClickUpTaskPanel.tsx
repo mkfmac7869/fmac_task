@@ -26,7 +26,7 @@ import {
   Send,
   ExternalLink
 } from 'lucide-react';
-import { Task, TaskStatus, TaskPriority, Comment, Attachment } from '@/types/task';
+import { Task, TaskStatus, TaskPriority, Comment, Attachment, CompletionEvidence } from '@/types/task';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -54,6 +54,7 @@ import { useTask } from '@/context/TaskContext';
 import { toast } from '@/hooks/use-toast';
 import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
 import { FirebaseService } from '@/lib/firebaseService';
+import TaskCompletionDialog from '@/components/tasks/TaskCompletionDialog';
 
 interface ClickUpTaskPanelProps {
   task: Task | null;
@@ -103,6 +104,9 @@ const ClickUpTaskPanel = ({
   const [tagInput, setTagInput] = useState('');
   const [isEditingTags, setIsEditingTags] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Completion Dialog
+  const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   
   const isAdmin = user?.roles?.includes('admin') || false;
 
@@ -164,6 +168,56 @@ const ClickUpTaskPanel = ({
       title: "Progress Updated",
       description: `Task progress set to ${tempProgress}%`,
     });
+  };
+
+  const handleTaskCompletion = async (evidence: string, completionAttachments: CompletionEvidence[]) => {
+    try {
+      // Update task status to completed
+      onUpdateTask(task.id, { 
+        status: TaskStatus.COMPLETED,
+        completionEvidence: evidence,
+        completionAttachments: completionAttachments,
+        completedAt: new Date().toISOString(),
+        completedBy: {
+          id: user?.id || '',
+          name: user?.name || 'Unknown User',
+          avatar: user?.avatar || ''
+        }
+      });
+
+      // Save completion attachments to Firebase Storage and Firestore
+      for (const attachment of completionAttachments) {
+        try {
+          // Save completion attachment metadata to Firestore
+          await FirebaseService.addDocument('completion_attachments', {
+            taskId: task.id,
+            name: attachment.name,
+            size: attachment.size,
+            type: attachment.type,
+            url: attachment.url,
+            uploadedBy: user?.name || 'Unknown User',
+            uploadedAt: attachment.uploadedAt,
+            evidence: evidence
+          });
+        } catch (error) {
+          console.error('Error saving completion attachment:', error);
+        }
+      }
+
+      toast({
+        title: "Task Completed",
+        description: "The task has been marked as completed with evidence.",
+      });
+
+      setIsCompletionDialogOpen(false);
+    } catch (error) {
+      console.error('Error completing task:', error);
+      toast({
+        title: "Completion Failed",
+        description: "Failed to complete the task. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleAddComment = () => {
@@ -520,7 +574,14 @@ const ClickUpTaskPanel = ({
               <span className="text-sm text-gray-500 w-24">Status</span>
               <Select
                 value={task.status}
-                onValueChange={(value) => onUpdateTask(task.id, { status: value as TaskStatus })}
+                onValueChange={(value) => {
+                  const newStatus = value as TaskStatus;
+                  if (newStatus === TaskStatus.COMPLETED) {
+                    setIsCompletionDialogOpen(true);
+                  } else {
+                    onUpdateTask(task.id, { status: newStatus });
+                  }
+                }}
               >
                 <SelectTrigger className="w-48 h-8">
                   <SelectValue />
@@ -1105,6 +1166,15 @@ const ClickUpTaskPanel = ({
           </div>
         </div>
       </div>
+      
+      {/* Task Completion Dialog */}
+      <TaskCompletionDialog
+        isOpen={isCompletionDialogOpen}
+        onClose={() => setIsCompletionDialogOpen(false)}
+        onComplete={handleTaskCompletion}
+        taskTitle={task.title}
+        taskId={task.id}
+      />
     </>
   );
 };

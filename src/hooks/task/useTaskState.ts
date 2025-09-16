@@ -118,7 +118,11 @@ export const useTaskState = () => {
               comments: parseJSON(task.comments) || [],
               attachments: [], // Attachments are loaded separately from attachments collection
               subtasks: parseJSON(task.subtasks) || [],
-              checklists: parseJSON(task.checklists) || []
+              checklists: parseJSON(task.checklists) || [],
+              completionEvidence: task.completion_evidence || undefined,
+              completionAttachments: parseJSON(task.completion_attachments) || [],
+              completedAt: task.completed_at || undefined,
+              completedBy: parseJSON(task.completed_by) || undefined
             };
           }));
           

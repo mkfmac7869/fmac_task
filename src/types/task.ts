@@ -54,6 +54,16 @@ export interface Checklist {
   items: ChecklistItem[];
 }
 
+export interface CompletionEvidence {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -81,6 +91,14 @@ export interface Task {
   attachments?: Attachment[];
   subtasks?: SubTask[];
   checklists?: Checklist[];
+  completionEvidence?: string;
+  completionAttachments?: CompletionEvidence[];
+  completedAt?: string;
+  completedBy?: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
 }
 
 export interface Project {

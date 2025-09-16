@@ -34,7 +34,7 @@ import {
 import Layout from '@/components/Layout';
 import { useTask } from '@/context/TaskContext';
 import { useAuth } from '@/context/AuthContext';
-import { Task, TaskStatus, TaskPriority, Comment, Attachment, SubTask, Checklist, ChecklistItem } from '@/types/task';
+import { Task, TaskStatus, TaskPriority, Comment, Attachment, SubTask, Checklist, ChecklistItem, CompletionEvidence } from '@/types/task';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -73,6 +73,7 @@ import {
 } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { FirebaseService, TaskService } from '@/lib/firebaseService';
+import TaskCompletionDialog from '@/components/tasks/TaskCompletionDialog';
 import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
 import { testActivitiesQuery } from '@/utils/testActivities';
 
@@ -138,6 +139,9 @@ const ClickUpTaskDetails = () => {
   const [newComment, setNewComment] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Completion Dialog
+  const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
 
   // Load task data
   useEffect(() => {
@@ -377,6 +381,12 @@ const ClickUpTaskDetails = () => {
   };
 
   const handleStatusChange = async (newStatus: TaskStatus) => {
+    // If changing to completed, show completion dialog
+    if (newStatus === TaskStatus.COMPLETED) {
+      setIsCompletionDialogOpen(true);
+      return;
+    }
+    
     updateTask(task.id, { status: newStatus });
     const oldStatus = statusOptions.find(s => s.value === task.status)?.label;
     const newStatusLabel = statusOptions.find(s => s.value === newStatus)?.label;
@@ -795,6 +805,59 @@ const ClickUpTaskDetails = () => {
       toast({
         title: "Delete Failed",
         description: "Failed to delete some attachments.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleTaskCompletion = async (evidence: string, completionAttachments: CompletionEvidence[]) => {
+    try {
+      // Update task status to completed
+      updateTask(task.id, { 
+        status: TaskStatus.COMPLETED,
+        completionEvidence: evidence,
+        completionAttachments: completionAttachments,
+        completedAt: new Date().toISOString(),
+        completedBy: {
+          id: user?.id || '',
+          name: user?.name || 'Unknown User',
+          avatar: user?.avatar || ''
+        }
+      });
+
+      // Add activity
+      await addActivity('completion', `completed task with evidence: ${evidence.substring(0, 50)}${evidence.length > 50 ? '...' : ''}`);
+
+      // Save completion attachments to Firebase Storage and Firestore
+      for (const attachment of completionAttachments) {
+        try {
+          // Save completion attachment metadata to Firestore
+          await FirebaseService.addDocument('completion_attachments', {
+            taskId: task.id,
+            name: attachment.name,
+            size: attachment.size,
+            type: attachment.type,
+            url: attachment.url,
+            uploadedBy: user?.name || 'Unknown User',
+            uploadedAt: attachment.uploadedAt,
+            evidence: evidence
+          });
+        } catch (error) {
+          console.error('Error saving completion attachment:', error);
+        }
+      }
+
+      toast({
+        title: "Task Completed",
+        description: "The task has been marked as completed with evidence.",
+      });
+
+      setIsCompletionDialogOpen(false);
+    } catch (error) {
+      console.error('Error completing task:', error);
+      toast({
+        title: "Completion Failed",
+        description: "Failed to complete the task. Please try again.",
         variant: "destructive"
       });
     }
@@ -1746,6 +1809,15 @@ const ClickUpTaskDetails = () => {
           </div>
         </div>
       </div>
+      
+      {/* Task Completion Dialog */}
+      <TaskCompletionDialog
+        isOpen={isCompletionDialogOpen}
+        onClose={() => setIsCompletionDialogOpen(false)}
+        onComplete={handleTaskCompletion}
+        taskTitle={task.title}
+        taskId={task.id}
+      />
     </Layout>
   );
 };

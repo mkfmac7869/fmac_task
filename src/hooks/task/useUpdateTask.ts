@@ -50,6 +50,10 @@ export const useUpdateTask = (tasks: Task[], setTasks: React.Dispatch<React.SetS
       if (updatedFields.subtasks !== undefined) dbFields.subtasks = JSON.stringify(updatedFields.subtasks);
       if (updatedFields.checklists !== undefined) dbFields.checklists = JSON.stringify(updatedFields.checklists);
       if (updatedFields.tags !== undefined) dbFields.tags = updatedFields.tags;
+      if (updatedFields.completionEvidence !== undefined) dbFields.completion_evidence = updatedFields.completionEvidence;
+      if (updatedFields.completionAttachments !== undefined) dbFields.completion_attachments = JSON.stringify(updatedFields.completionAttachments);
+      if (updatedFields.completedAt !== undefined) dbFields.completed_at = updatedFields.completedAt;
+      if (updatedFields.completedBy !== undefined) dbFields.completed_by = JSON.stringify(updatedFields.completedBy);
       
       console.log("Updating task with ID:", id, "Fields:", dbFields);
       
