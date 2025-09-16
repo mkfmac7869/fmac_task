@@ -1634,33 +1634,40 @@ const ClickUpTaskDetails = () => {
                   {/* Due date */}
                   <div>
                     <label className="text-sm text-gray-500 mb-1 block">Due date</label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start">
-                          <Calendar className="h-3.5 w-3.5 mr-2" />
-                          {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'Set due date'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <CalendarComponent
-                          mode="single"
-                          selected={task.dueDate ? new Date(task.dueDate) : undefined}
-                          onSelect={async (date) => {
-                            if (date) {
-                              const oldDate = task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'No due date';
-                              const newDate = format(date, 'MMM d, yyyy');
-                              updateTask(task.id, { dueDate: date.toISOString() });
-                              await addActivity('status_change', `changed due date from ${oldDate} to ${newDate}`, task.dueDate, date.toISOString());
-                              toast({
-                                title: "Due Date Updated",
-                                description: `Due date set to ${newDate}`,
-                              });
-                            }
-                          }}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    {isAdmin ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start">
+                            <Calendar className="h-3.5 w-3.5 mr-2" />
+                            {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'Set due date'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={task.dueDate ? new Date(task.dueDate) : undefined}
+                            onSelect={async (date) => {
+                              if (date) {
+                                const oldDate = task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'No due date';
+                                const newDate = format(date, 'MMM d, yyyy');
+                                updateTask(task.id, { dueDate: date.toISOString() });
+                                await addActivity('status_change', `changed due date from ${oldDate} to ${newDate}`, task.dueDate, date.toISOString());
+                                toast({
+                                  title: "Due Date Updated",
+                                  description: `Due date set to ${newDate}`,
+                                });
+                              }
+                            }}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <Button variant="outline" className="w-full justify-start cursor-not-allowed opacity-60" disabled>
+                        <Calendar className="h-3.5 w-3.5 mr-2" />
+                        {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'No due date'}
+                      </Button>
+                    )}
                   </div>
 
                   {/* Priority */}

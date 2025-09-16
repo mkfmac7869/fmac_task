@@ -780,10 +780,28 @@ const ClickUpTaskPanel = ({
             {/* Due date */}
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500 w-24">Due date</span>
-              <Button variant="outline" size="sm" className="h-8">
-                <Calendar className="h-3.5 w-3.5 mr-2" />
-                {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'Set due date'}
-              </Button>
+              {isAdmin ? (
+                <input
+                  type="date"
+                  value={task.dueDate ? format(new Date(task.dueDate), 'yyyy-MM-dd') : ''}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const newDueDate = new Date(e.target.value).toISOString();
+                      onUpdateTask(task.id, { dueDate: newDueDate });
+                      toast({
+                        title: "Task Updated",
+                        description: `Due date updated to ${format(new Date(newDueDate), 'MMM d, yyyy')}`,
+                      });
+                    }
+                  }}
+                  className="h-8 px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                />
+              ) : (
+                <Button variant="outline" size="sm" className="h-8 cursor-not-allowed opacity-60" disabled>
+                  <Calendar className="h-3.5 w-3.5 mr-2" />
+                  {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : 'No due date'}
+                </Button>
+              )}
             </div>
 
             {/* Priority */}
