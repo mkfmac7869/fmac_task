@@ -8,7 +8,8 @@ import {
   User,
   Flag,
   Folder,
-  Check
+  Check,
+  Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +44,7 @@ interface MobileTaskHeaderProps {
   updateSort: (field: string) => void;
   resetFilters: () => void;
   activeFilterCount: number;
+  availableTags?: string[];
 }
 
 const MobileTaskHeader = ({ 
@@ -54,7 +56,8 @@ const MobileTaskHeader = ({
   updateFilter,
   updateSort,
   resetFilters,
-  activeFilterCount
+  activeFilterCount,
+  availableTags = []
 }: MobileTaskHeaderProps) => {
   const { projects } = useTask();
   const [showFilters, setShowFilters] = useState(false);
@@ -276,6 +279,43 @@ const MobileTaskHeader = ({
                         ))}
                       </DropdownMenuContent>
                     </DropdownMenu>
+                  </div>
+                )}
+
+                {/* Tags Filter */}
+                {availableTags.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-3">Tags</h3>
+                    <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                      {availableTags.map((tag) => (
+                        <Button
+                          key={tag}
+                          variant={filters.tags?.includes(tag) ? 'default' : 'outline'}
+                          size="sm"
+                          className="h-8 text-xs"
+                          onClick={() => {
+                            const currentTags = filters.tags || [];
+                            const newTags = currentTags.includes(tag)
+                              ? currentTags.filter(t => t !== tag)
+                              : [...currentTags, tag];
+                            updateFilter('tags', newTags);
+                          }}
+                        >
+                          <Tag className="h-3 w-3 mr-1" />
+                          {tag}
+                        </Button>
+                      ))}
+                    </div>
+                    {filters.tags?.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => updateFilter('tags', [])}
+                        className="mt-2 h-8 text-xs w-full"
+                      >
+                        Clear tags
+                      </Button>
+                    )}
                   </div>
                 )}
 

@@ -49,6 +49,7 @@ export const useUpdateTask = (tasks: Task[], setTasks: React.Dispatch<React.SetS
       if (updatedFields.attachments !== undefined) dbFields.attachments = JSON.stringify(updatedFields.attachments);
       if (updatedFields.subtasks !== undefined) dbFields.subtasks = JSON.stringify(updatedFields.subtasks);
       if (updatedFields.checklists !== undefined) dbFields.checklists = JSON.stringify(updatedFields.checklists);
+      if (updatedFields.tags !== undefined) dbFields.tags = updatedFields.tags;
       
       console.log("Updating task with ID:", id, "Fields:", dbFields);
       

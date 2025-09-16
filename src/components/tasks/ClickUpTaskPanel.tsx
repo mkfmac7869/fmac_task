@@ -99,6 +99,9 @@ const ClickUpTaskPanel = ({
   const [comments, setComments] = useState<Comment[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [isEditingTags, setIsEditingTags] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const isAdmin = user?.roles?.includes('admin') || false;
@@ -108,6 +111,7 @@ const ClickUpTaskPanel = ({
     if (task) {
       setComments(task.comments || []);
       setAttachments(task.attachments || []);
+      setTags(task.tags || []);
     }
   }, [task]);
 
@@ -223,6 +227,25 @@ const ClickUpTaskPanel = ({
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+      if (!tags.includes(newTag)) {
+        const updatedTags = [...tags, newTag];
+        setTags(updatedTags);
+        onUpdateTask(task.id, { tags: updatedTags });
+      }
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    const updatedTags = tags.filter(tag => tag !== tagToRemove);
+    setTags(updatedTags);
+    onUpdateTask(task.id, { tags: updatedTags });
   };
 
   const getFileIcon = (type: string) => {
@@ -618,17 +641,61 @@ const ClickUpTaskPanel = ({
             <div className="flex items-start gap-4">
               <span className="text-sm text-gray-500 w-24 pt-1">Tags</span>
               <div className="flex-1">
-                <div className="flex flex-wrap gap-2">
-                  {task.tags.map((tag, idx) => (
-                    <Badge key={idx} variant="secondary" className="bg-gray-100">
-                      {tag}
-                    </Badge>
-                  ))}
-                  <Button variant="ghost" size="sm" className="h-6 px-2">
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add tag
-                  </Button>
-                </div>
+                {isEditingTags ? (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag, idx) => (
+                        <Badge key={idx} variant="secondary" className="bg-gray-100 flex items-center gap-1">
+                          {tag}
+                          <button
+                            onClick={() => handleRemoveTag(tag)}
+                            className="ml-1 hover:text-red-600"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={handleAddTag}
+                        placeholder="Type a tag and press Enter"
+                        className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditingTags(false);
+                          setTagInput('');
+                        }}
+                        className="h-7"
+                      >
+                        Done
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag, idx) => (
+                      <Badge key={idx} variant="secondary" className="bg-gray-100">
+                        {tag}
+                      </Badge>
+                    ))}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2"
+                      onClick={() => setIsEditingTags(true)}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add tag
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 

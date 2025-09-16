@@ -29,6 +29,7 @@ export const useAddTask = (setTasks: React.Dispatch<React.SetStateAction<Task[]>
         project_id: newTask.projectId || null, // Ensure null is used when projectId is not provided
         assigned_to: newTask.assignee?.id || null,
         created_by: user.id,
+        tags: newTask.tags || [],
         // We don't include progress in database insert
       };
 

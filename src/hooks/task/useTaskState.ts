@@ -114,7 +114,7 @@ export const useTaskState = () => {
               assignee: assignee,
               creator: creator,
               createdAt: task.created_at,
-              tags: [],
+              tags: task.tags || [],
               comments: parseJSON(task.comments) || [],
               attachments: parseJSON(task.attachments) || [],
               subtasks: parseJSON(task.subtasks) || [],

@@ -35,7 +35,8 @@ const Tasks = () => {
     updateFilter,
     resetFilters,
     updateSort,
-    activeFilterCount
+    activeFilterCount,
+    availableTags
   } = useTaskFilters(tasks);
   
   // Mobile-optimized view
@@ -103,6 +104,7 @@ const Tasks = () => {
             updateSort={updateSort}
             resetFilters={resetFilters}
             activeFilterCount={activeFilterCount}
+            availableTags={availableTags}
           />
           
           {/* Mobile Task List */}
@@ -151,6 +153,7 @@ const Tasks = () => {
           updateSort={updateSort}
           resetFilters={resetFilters}
           activeFilterCount={activeFilterCount}
+          availableTags={availableTags}
         />
         <MinimalNewTaskDialog 
           isOpen={isNewTaskDialogOpen}

@@ -10,6 +10,7 @@ export interface TaskFilters {
   assignee: 'all' | 'me' | 'unassigned';
   dueDate: 'all' | 'today' | 'tomorrow' | 'overdue' | 'this_week';
   project: string | 'all';
+  tags: string[];
   showCompleted: boolean;
 }
 
@@ -25,6 +26,7 @@ const defaultFilters: TaskFilters = {
   assignee: 'all',
   dueDate: 'all',
   project: 'all',
+  tags: [],
   showCompleted: true
 };
 
@@ -121,6 +123,15 @@ export const useTaskFilters = (tasks: Task[]) => {
         return false;
       }
 
+      // Tag filter
+      if (filters.tags.length > 0) {
+        const taskTags = task.tags || [];
+        const hasAllTags = filters.tags.every(filterTag => 
+          taskTags.some(taskTag => taskTag.toLowerCase() === filterTag.toLowerCase())
+        );
+        if (!hasAllTags) return false;
+      }
+
       return true;
     });
 
@@ -191,9 +202,21 @@ export const useTaskFilters = (tasks: Task[]) => {
     if (filters.assignee !== 'all') count++;
     if (filters.dueDate !== 'all') count++;
     if (filters.project !== 'all') count++;
+    if (filters.tags.length > 0) count++;
     if (!filters.showCompleted) count++;
     return count;
   }, [filters]);
+
+  // Get all unique tags from tasks
+  const availableTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    tasks.forEach(task => {
+      if (task.tags) {
+        task.tags.forEach(tag => tagSet.add(tag));
+      }
+    });
+    return Array.from(tagSet).sort();
+  }, [tasks]);
 
   return {
     filters,
@@ -202,6 +225,7 @@ export const useTaskFilters = (tasks: Task[]) => {
     updateFilter,
     resetFilters,
     updateSort,
-    activeFilterCount
+    activeFilterCount,
+    availableTags
   };
 };

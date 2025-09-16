@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Calendar, User, ChevronDown, Check } from 'lucide-react';
+import { X, Calendar, User, ChevronDown, Check, Tag, Plus } from 'lucide-react';
 import { useTask } from '@/context/TaskContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { TaskStatus, TaskPriority } from '@/types/task';
 import { format } from 'date-fns';
 import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
+import { Badge } from '@/components/ui/badge';
 
 interface MinimalNewTaskDialogProps {
   isOpen: boolean;
@@ -110,6 +111,8 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
   const [dueDate, setDueDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [assigneeId, setAssigneeId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
 
   const isAdmin = user?.roles?.includes('admin') || false;
 
@@ -160,7 +163,7 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
         dueDate: new Date(dueDate).toISOString(),
         progress: 0,
         assignee,
-        tags: [],
+        tags,
         comments: [],
         attachments: [],
         subtasks: [],
@@ -197,11 +200,28 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
     setProjectId('');
     setDueDate(format(new Date(), 'yyyy-MM-dd'));
     setAssigneeId('');
+    setTags([]);
+    setTagInput('');
   };
 
   const handleClose = () => {
     resetForm();
     onOpenChange(false);
+  };
+
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      const newTag = tagInput.trim();
+      if (!tags.includes(newTag)) {
+        setTags([...tags, newTag]);
+      }
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
   // Priority colors
@@ -437,6 +457,48 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
                   </label>
                 </div>
               )}
+            </div>
+            
+            {/* Tags */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tags
+              </label>
+              <div className="space-y-2">
+                <div className="relative">
+                  <Tag className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleAddTag}
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    placeholder="Type a tag and press Enter"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="px-2 py-1 flex items-center gap-1"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          className="ml-1 hover:text-red-600"
+                          disabled={isSubmitting}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             
             {/* Submit Buttons */}

@@ -9,7 +9,8 @@ import {
   Flag,
   Folder,
   Check,
-  SortAsc
+  SortAsc,
+  Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +44,7 @@ interface EnhancedTaskHeaderProps {
   updateSort: (field: SortConfig['field']) => void;
   resetFilters: () => void;
   activeFilterCount: number;
+  availableTags: string[];
 }
 
 const EnhancedTaskHeader = ({ 
@@ -53,7 +55,8 @@ const EnhancedTaskHeader = ({
   updateFilter,
   updateSort,
   resetFilters,
-  activeFilterCount
+  activeFilterCount,
+  availableTags
 }: EnhancedTaskHeaderProps) => {
   const { projects } = useTask();
   const [showFilters, setShowFilters] = useState(false);
@@ -299,6 +302,46 @@ const EnhancedTaskHeader = ({
                     </DropdownMenu>
                   </div>
                 )}
+
+                {/* Tags Filter */}
+                <div>
+                  <Label className="text-sm font-medium mb-2">Tags</Label>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                      {availableTags.length > 0 ? (
+                        availableTags.map((tag) => (
+                          <Button
+                            key={tag}
+                            variant={filters.tags.includes(tag) ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                              const newTags = filters.tags.includes(tag)
+                                ? filters.tags.filter(t => t !== tag)
+                                : [...filters.tags, tag];
+                              updateFilter('tags', newTags);
+                            }}
+                          >
+                            <Tag className="h-3 w-3 mr-1" />
+                            {tag}
+                          </Button>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">No tags available</p>
+                      )}
+                    </div>
+                    {filters.tags.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => updateFilter('tags', [])}
+                        className="h-7 text-xs"
+                      >
+                        Clear tags
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
             </PopoverContent>
           </Popover>
