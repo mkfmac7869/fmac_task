@@ -10,7 +10,8 @@ import {
   Folder,
   Check,
   Tag,
-  RefreshCw
+  RefreshCw,
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,7 @@ interface MobileTaskHeaderProps {
   taskCount?: number;
   onMenuClick?: () => void;
   onRefresh?: () => void;
+  onExportExcel?: () => void;
   filters: any;
   sortConfig: any;
   updateFilter: (key: string, value: any) => void;
@@ -54,6 +56,7 @@ const MobileTaskHeader = ({
   taskCount = 0,
   onMenuClick,
   onRefresh,
+  onExportExcel,
   filters,
   sortConfig,
   updateFilter,
@@ -90,6 +93,18 @@ const MobileTaskHeader = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Export Excel Button */}
+          {onExportExcel && (
+            <Button 
+              onClick={onExportExcel}
+              variant="outline"
+              size="sm"
+              className="h-9 w-9 p-0"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          )}
+          
           {/* Refresh Button */}
           {onRefresh && (
             <Button 

@@ -11,7 +11,8 @@ import {
   Check,
   SortAsc,
   Tag,
-  RefreshCw
+  RefreshCw,
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ import { useTask } from '@/context/TaskContext';
 interface EnhancedTaskHeaderProps {
   onNewTask: () => void;
   onRefresh?: () => void;
+  onExportExcel?: () => void;
   taskCount: number;
   filters: TaskFilters;
   sortConfig: SortConfig;
@@ -53,6 +55,7 @@ interface EnhancedTaskHeaderProps {
 const EnhancedTaskHeader = ({ 
   onNewTask,
   onRefresh,
+  onExportExcel,
   taskCount,
   filters,
   sortConfig,
@@ -78,6 +81,17 @@ const EnhancedTaskHeader = ({
           </div>
           
           <div className="flex items-center gap-2">
+            {onExportExcel && (
+              <Button 
+                onClick={onExportExcel}
+                variant="outline"
+                className="border-gray-300 hover:bg-gray-50"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Excel
+              </Button>
+            )}
+            
             {onRefresh && (
               <Button 
                 onClick={onRefresh}

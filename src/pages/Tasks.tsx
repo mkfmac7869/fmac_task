@@ -17,10 +17,12 @@ import EnhancedMobileTaskPanel from '@/components/tasks/EnhancedMobileTaskPanel'
 import { TaskStatus, Task } from '@/types/task';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTaskFilters } from '@/hooks/useTaskFilters';
+import { exportFilteredTasksToExcel } from '@/utils/excelExport';
+import { toast } from '@/hooks/use-toast';
 
 const Tasks = () => {
   const navigate = useNavigate();
-  const { tasks, updateTask, deleteTask, getTasksByStatus, isLoading, refreshTasks } = useTask();
+  const { tasks, updateTask, deleteTask, getTasksByStatus, isLoading, refreshTasks, projects } = useTask();
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -88,6 +90,40 @@ const Tasks = () => {
     });
   };
 
+  const handleExportExcel = () => {
+    try {
+      // Get active filter names for better filename
+      const activeFilters: string[] = [];
+      if (filters.search) activeFilters.push('search');
+      if (filters.status !== 'all') activeFilters.push('status');
+      if (filters.priority !== 'all') activeFilters.push('priority');
+      if (filters.assignee !== 'all') activeFilters.push('assignee');
+      if (filters.project !== 'all') activeFilters.push('project');
+      if (filters.tags.length > 0) activeFilters.push('tags');
+      if (!filters.showCompleted) activeFilters.push('hide-completed');
+
+      const filterInfo = {
+        totalTasks: tasks.length,
+        filteredTasks: filteredTasks.length,
+        activeFilters
+      };
+
+      exportFilteredTasksToExcel(filteredTasks, projects, filterInfo);
+      
+      toast({
+        title: "Export Successful",
+        description: `Exported ${filteredTasks.length} task${filteredTasks.length !== 1 ? 's' : ''} to Excel`,
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      toast({
+        title: "Export Failed",
+        description: "There was an error exporting tasks to Excel. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isMobile) {
     return (
       <Layout>
@@ -99,6 +135,7 @@ const Tasks = () => {
               // Handle menu click if needed
             }}
             onRefresh={refreshTasks}
+            onExportExcel={handleExportExcel}
             filters={filters}
             sortConfig={sortConfig}
             updateFilter={updateFilter}
@@ -148,6 +185,7 @@ const Tasks = () => {
         <EnhancedTaskHeader 
           onNewTask={() => setIsNewTaskDialogOpen(true)}
           onRefresh={refreshTasks}
+          onExportExcel={handleExportExcel}
           taskCount={filteredTasks.length}
           filters={filters}
           sortConfig={sortConfig}
