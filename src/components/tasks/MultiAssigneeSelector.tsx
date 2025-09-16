@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Input } from '@/components/ui/input';
 import { Check, X, Users, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +32,7 @@ const MultiAssigneeSelector: React.FC<MultiAssigneeSelectorProps> = ({
   className
 }) => {
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleAssigneeToggle = (member: Assignee) => {
     const isSelected = selectedAssignees.some(assignee => assignee.id === member.id);
@@ -125,39 +126,58 @@ const MultiAssigneeSelector: React.FC<MultiAssigneeSelectorProps> = ({
               {selectedAssignees.length === 0 ? 'Assign members' : 'Add member'}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Search members..." />
-              <CommandEmpty>No members found.</CommandEmpty>
-              <CommandGroup>
-                {availableMembers.map((member) => {
-                  const isSelected = selectedAssignees.some(assignee => assignee.id === member.id);
-                  return (
-                    <CommandItem
-                      key={member.id}
-                      onSelect={() => handleAssigneeToggle(member)}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2 flex-1">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={member.avatar} />
-                          <AvatarFallback className="text-xs">{member.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{member.name}</p>
-                          {member.email && (
-                            <p className="text-xs text-gray-500">{member.email}</p>
-                          )}
+          <PopoverContent className="w-64 p-3" align="start">
+            <div className="space-y-3">
+              <Input
+                placeholder="Search members..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-8"
+              />
+              
+              <div className="max-h-48 overflow-y-auto space-y-1">
+                {availableMembers
+                  .filter(member => 
+                    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    member.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((member) => {
+                    const isSelected = selectedAssignees.some(assignee => assignee.id === member.id);
+                    return (
+                      <div
+                        key={member.id}
+                        onClick={() => handleAssigneeToggle(member)}
+                        className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2 flex-1">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={member.avatar} />
+                            <AvatarFallback className="text-xs">{member.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{member.name}</p>
+                            {member.email && (
+                              <p className="text-xs text-gray-500">{member.email}</p>
+                            )}
+                          </div>
                         </div>
+                        {isSelected && (
+                          <Check className="h-4 w-4 text-green-600" />
+                        )}
                       </div>
-                      {isSelected && (
-                        <Check className="h-4 w-4 text-green-600" />
-                      )}
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </Command>
+                    );
+                  })}
+                
+                {availableMembers.filter(member => 
+                  member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  member.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                ).length === 0 && (
+                  <div className="text-center py-4 text-sm text-gray-500">
+                    No members found.
+                  </div>
+                )}
+              </div>
+            </div>
           </PopoverContent>
         </Popover>
       )}
