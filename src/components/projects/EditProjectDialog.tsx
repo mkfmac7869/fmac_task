@@ -292,16 +292,28 @@ const EditProjectDialog = ({ project, isOpen, onOpenChange }: EditProjectDialogP
               {showMemberSelector && (
                 <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
                   <div className="space-y-2">
-                    {membersList
-                      .filter((member) => {
+                    {(() => {
+                      // Filter members based on selected department
+                      const filteredMembers = membersList.filter((member) => {
                         // If no department is selected (null), show all members
                         if (!formData.departmentId) {
                           return true;
                         }
                         // Otherwise, filter by the selected department
                         return member.department === formData.departmentId;
-                      })
-                      .map((member) => {
+                      });
+
+                      // If no members found and a specific department is selected, show message
+                      if (filteredMembers.length === 0 && formData.departmentId) {
+                        return (
+                          <div className="text-center py-4 text-sm text-gray-500">
+                            No members found in selected department
+                          </div>
+                        );
+                      }
+
+                      // Render the filtered members
+                      return filteredMembers.map((member) => {
                         const isSelected = formData.members.some(m => m.id === member.id);
                         return (
                           <div key={member.id} className="flex items-center space-x-2">
@@ -326,17 +338,8 @@ const EditProjectDialog = ({ project, isOpen, onOpenChange }: EditProjectDialogP
                             </label>
                           </div>
                         );
-                      })}
-                    {membersList.filter((member) => {
-                      if (!formData.departmentId) {
-                        return true;
-                      }
-                      return member.department === formData.departmentId;
-                    }).length === 0 && formData.departmentId && (
-                      <div className="text-center py-4 text-sm text-gray-500">
-                        No members found in selected department
-                      </div>
-                    )}
+                      });
+                    })()}
                   </div>
                 </div>
               )}
