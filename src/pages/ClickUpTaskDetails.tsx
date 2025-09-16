@@ -105,16 +105,24 @@ const priorityOptions = [
 ];
 
 const ClickUpTaskDetails = () => {
-  const { taskId } = useParams<{ taskId: string }>();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { tasks, getTaskById, updateTask, deleteTask, projects, isLoading } = useTask();
-  const { assignableUsers, isLoading: isLoadingMembers, permissionLevel, error: assignmentError } = useTaskAssignmentPermissions();
+  console.log("ClickUpTaskDetails rendering");
   
-  // Fallback if assignment permissions hook fails
-  if (assignmentError) {
-    console.error("Assignment permissions error:", assignmentError);
-  }
+  try {
+    const { taskId } = useParams<{ taskId: string }>();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const { tasks, getTaskById, updateTask, deleteTask, projects, isLoading } = useTask();
+    
+    console.log("Basic hooks loaded:", { taskId, user: user?.name, tasksCount: tasks?.length, isLoading });
+    
+    const { assignableUsers, isLoading: isLoadingMembers, permissionLevel, error: assignmentError } = useTaskAssignmentPermissions();
+    
+    console.log("Assignment permissions loaded:", { assignableUsersCount: assignableUsers?.length, isLoadingMembers, permissionLevel });
+    
+    // Fallback if assignment permissions hook fails
+    if (assignmentError) {
+      console.error("Assignment permissions error:", assignmentError);
+    }
   
   // State
   const [task, setTask] = useState<Task | undefined>(undefined);
@@ -1943,6 +1951,27 @@ const ClickUpTaskDetails = () => {
       />
     </Layout>
   );
+  
+  } catch (error) {
+    console.error("ClickUpTaskDetails crashed:", error);
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-full">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900">Something went wrong</h2>
+            <p className="text-gray-600 mt-2">There was an error loading the task details.</p>
+            <p className="text-sm text-gray-500 mt-1">Error: {error instanceof Error ? error.message : 'Unknown error'}</p>
+            <button 
+              onClick={() => window.location.href = '/tasks'}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            >
+              Back to Tasks
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 };
 
 export default ClickUpTaskDetails;
