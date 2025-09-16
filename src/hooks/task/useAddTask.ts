@@ -27,9 +27,20 @@ export const useAddTask = (setTasks: React.Dispatch<React.SetStateAction<Task[]>
         priority: newTask.priority,
         due_date: newTask.dueDate,
         project_id: newTask.projectId || null, // Ensure null is used when projectId is not provided
-        assigned_to: newTask.assignee?.id || null,
+        assigned_to: newTask.assignee?.id || (newTask.assignees && newTask.assignees.length > 0 ? newTask.assignees[0].id : null),
+        assignees: JSON.stringify(newTask.assignees || []),
         created_by: user.id,
-        tags: newTask.tags || [],
+        creator: JSON.stringify({
+          id: user.id,
+          name: user.name,
+          avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`,
+          email: user.email
+        }),
+        tags: JSON.stringify(newTask.tags || []),
+        comments: JSON.stringify(newTask.comments || []),
+        attachments: JSON.stringify(newTask.attachments || []),
+        subtasks: JSON.stringify(newTask.subtasks || []),
+        checklists: JSON.stringify(newTask.checklists || []),
         // We don't include progress in database insert
       };
 
@@ -49,7 +60,14 @@ export const useAddTask = (setTasks: React.Dispatch<React.SetStateAction<Task[]>
         ...newTask,
         id: result.id,
         createdAt: result.createdAt || new Date(),
-        progress: newTask.status === 'completed' ? 100 : newTask.status === 'in_progress' ? 50 : 0
+        progress: newTask.status === 'completed' ? 100 : newTask.status === 'in_progress' ? 50 : 0,
+        creator: {
+          id: user.id,
+          name: user.name,
+          avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`,
+          email: user.email
+        },
+        assignees: newTask.assignees || []
       };
 
       setTasks(prevTasks => [...prevTasks, createdTask]);
