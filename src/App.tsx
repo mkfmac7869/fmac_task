@@ -65,7 +65,7 @@ function App() {
             <Route element={<AuthGuard />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/tasks" element={<Tasks />} />
-              <Route path="/tasks/:taskId" element={<SimpleTaskDetails />} />
+              <Route path="/tasks/:taskId" element={<ClickUpTaskDetails />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/projects/:projectId" element={<ProjectDetails />} />
               <Route path="/team" element={<Team />} />

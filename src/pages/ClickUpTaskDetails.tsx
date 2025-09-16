@@ -105,29 +105,11 @@ const priorityOptions = [
 ];
 
 const ClickUpTaskDetails = () => {
-  console.log("ClickUpTaskDetails component rendering");
-  
   const { taskId } = useParams<{ taskId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { tasks, getTaskById, updateTask, deleteTask, projects, isLoading } = useTask();
-  
-  console.log("ClickUpTaskDetails state:", {
-    taskId,
-    user: user?.name,
-    tasksCount: tasks?.length,
-    isLoading,
-    projectsCount: projects?.length
-  });
-  
   const { assignableUsers, isLoading: isLoadingMembers, permissionLevel, error: assignmentError } = useTaskAssignmentPermissions();
-  
-  console.log("Assignment permissions state:", {
-    assignableUsersCount: assignableUsers?.length,
-    isLoadingMembers,
-    permissionLevel,
-    assignmentError
-  });
   
   // Fallback if assignment permissions hook fails
   if (assignmentError) {
@@ -171,15 +153,11 @@ const ClickUpTaskDetails = () => {
 
   // Load task data
   useEffect(() => {
-    console.log("Task loading effect triggered:", { taskId, isLoading, tasksLength: tasks?.length });
-    
     if (taskId && !isLoading) {
       const foundTask = getTaskById(taskId);
-      console.log("Found task:", foundTask ? { id: foundTask.id, title: foundTask.title } : "null");
       
       if (foundTask) {
         setTask(foundTask);
-        console.log("Task set successfully:", foundTask.title);
         // Initialize state from task data
         setSubtasks(foundTask.subtasks || []);
         setChecklists(foundTask.checklists || []);
@@ -366,10 +344,7 @@ const ClickUpTaskDetails = () => {
     }
   };
 
-  console.log("Loading checks:", { isLoading, isLoadingMembers, task: task?.title });
-
   if (isLoading || isLoadingMembers) {
-    console.log("Showing loading spinner");
     return (
       <Layout>
         <div className="flex justify-center items-center h-full">
@@ -380,7 +355,6 @@ const ClickUpTaskDetails = () => {
   }
 
   if (!task) {
-    console.log("No task found, returning null");
     return (
       <Layout>
         <div className="flex justify-center items-center h-full">
@@ -398,8 +372,6 @@ const ClickUpTaskDetails = () => {
       </Layout>
     );
   }
-
-  console.log("Rendering task details for:", task.title);
 
   const project = task.projectId ? projects.find(p => p.id === task.projectId) : null;
   const currentStatus = statusOptions.find(opt => opt.value === task.status);
