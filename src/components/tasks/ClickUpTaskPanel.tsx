@@ -345,6 +345,66 @@ const ClickUpTaskPanel = ({
     }
   };
 
+  // NEW FUNCTION: Delete ALL attachments for this task
+  const handleDeleteAllAttachments = async () => {
+    console.log('=== DELETING ALL ATTACHMENTS (PANEL) ===');
+    console.log('Task ID:', task.id);
+    
+    // Clear UI immediately
+    setAttachments([]);
+    
+    toast({
+      title: "Deleting All Attachments",
+      description: "Removing all files...",
+    });
+
+    try {
+      // Get all attachments for this task
+      const allAttachmentDocs = await FirebaseService.getDocuments('attachments', [
+        { field: 'taskId', operator: '==', value: task.id }
+      ]);
+      
+      console.log('Found attachments to delete:', allAttachmentDocs.length);
+      
+      // Delete each attachment
+      for (const attachmentDoc of allAttachmentDocs) {
+        try {
+          console.log('Deleting attachment:', attachmentDoc.name);
+          
+          // Delete from Firestore
+          await FirebaseService.deleteDocument('attachments', attachmentDoc.id);
+          console.log('Deleted from Firestore:', attachmentDoc.name);
+          
+          // Delete from Storage
+          if (attachmentDoc.filePath) {
+            try {
+              await FirebaseService.deleteFile(attachmentDoc.filePath);
+              console.log('Deleted from Storage:', attachmentDoc.name);
+            } catch (e) {
+              console.log('Storage file not found (already deleted):', attachmentDoc.name);
+            }
+          }
+        } catch (error) {
+          console.error('Error deleting attachment:', attachmentDoc.name, error);
+        }
+      }
+      
+      toast({
+        title: "All Attachments Deleted",
+        description: `${allAttachmentDocs.length} files have been removed.`,
+      });
+      
+      console.log('All attachments deleted successfully');
+    } catch (error) {
+      console.error('Error deleting all attachments:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete some attachments.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getFileIcon = (type: string) => {
     if (type.startsWith('image/')) return <Image className="h-4 w-4" />;
     if (type.includes('pdf')) return <FileText className="h-4 w-4" />;
@@ -903,15 +963,28 @@ const ClickUpTaskPanel = ({
           <div className="mb-8">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-gray-700">Attachments</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="h-3.5 w-3.5 mr-1" />
-                Attach
-              </Button>
+              <div className="flex gap-1">
+                {attachments.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={handleDeleteAllAttachments}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                    Delete All
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-3.5 w-3.5 mr-1" />
+                  Attach
+                </Button>
+              </div>
               <input
                 ref={fileInputRef}
                 type="file"
