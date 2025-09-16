@@ -7,6 +7,7 @@ import { TaskStatus, TaskPriority } from '@/types/task';
 import { format } from 'date-fns';
 import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
 import { Badge } from '@/components/ui/badge';
+import MultiAssigneeSelector from '@/components/tasks/MultiAssigneeSelector';
 
 interface MinimalNewTaskDialogProps {
   isOpen: boolean;
@@ -110,6 +111,7 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
   const [projectId, setProjectId] = useState('');
   const [dueDate, setDueDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [assigneeId, setAssigneeId] = useState('');
+  const [assignees, setAssignees] = useState<{id: string; name: string; avatar: string; email?: string}[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
@@ -163,6 +165,7 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
         dueDate: new Date(dueDate).toISOString(),
         progress: 0,
         assignee,
+        assignees,
         tags,
         comments: [],
         attachments: [],
@@ -200,6 +203,7 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
     setProjectId('');
     setDueDate(format(new Date(), 'yyyy-MM-dd'));
     setAssigneeId('');
+    setAssignees([]);
     setTags([]);
     setTagInput('');
   };
@@ -415,48 +419,16 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
               </div>
             </div>
             
-            {/* Assignee */}
+            {/* Multiple Assignees */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Assignee
+                Assignees
               </label>
-              {isAdmin ? (
-                <CustomDropdown
-                  value={assigneeId}
-                  onChange={setAssigneeId}
-                  disabled={isSubmitting || isLoadingUsers}
-                  placeholder={isLoadingUsers ? "Loading users..." : "Select assignee"}
-                  options={[
-                    { value: '', label: 'Unassigned', icon: <User className="h-4 w-4 text-gray-400" /> },
-                    ...(users?.map((user) => ({
-                      value: user.id,
-                      label: user.name,
-                      icon: (
-                        <img 
-                          src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`} 
-                          alt={user.name}
-                          className="w-5 h-5 rounded-full"
-                        />
-                      )
-                    })) || [])
-                  ]}
-                />
-              ) : (
-                <div className="flex items-center p-2 bg-gray-50 rounded-md">
-                  <input
-                    id="assign-to-self"
-                    type="checkbox"
-                    checked={assigneeId === user?.id}
-                    onChange={(e) => setAssigneeId(e.target.checked ? user?.id || '' : '')}
-                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                    disabled={isSubmitting}
-                  />
-                  <label htmlFor="assign-to-self" className="ml-2 text-sm text-gray-700 flex items-center">
-                    <User className="h-4 w-4 mr-1" />
-                    Assign to me
-                  </label>
-                </div>
-              )}
+              <MultiAssigneeSelector
+                assignees={assignees}
+                onAssigneesChange={setAssignees}
+                isAdmin={isAdmin}
+              />
             </div>
             
             {/* Tags */}

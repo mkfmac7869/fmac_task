@@ -112,6 +112,7 @@ export const useTaskState = () => {
               projectId: task.project_id,
               progress: task.progress || 0,
               assignee: assignee,
+              assignees: parseJSON(task.assignees) || [],
               creator: creator,
               createdAt: task.created_at,
               tags: task.tags || [],

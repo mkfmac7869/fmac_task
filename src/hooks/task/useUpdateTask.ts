@@ -44,6 +44,7 @@ export const useUpdateTask = (tasks: Task[], setTasks: React.Dispatch<React.SetS
       if (updatedFields.dueDate !== undefined) dbFields.due_date = updatedFields.dueDate;
       if (updatedFields.projectId !== undefined) dbFields.project_id = updatedFields.projectId;
       if (updatedFields.assignee !== undefined) dbFields.assigned_to = updatedFields.assignee?.id || null;
+      if (updatedFields.assignees !== undefined) dbFields.assignees = JSON.stringify(updatedFields.assignees);
       if (updatedFields.progress !== undefined) dbFields.progress = updatedFields.progress;
       if (updatedFields.comments !== undefined) dbFields.comments = JSON.stringify(updatedFields.comments);
       // Don't save attachments to task document - they are stored separately in attachments collection

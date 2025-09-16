@@ -79,6 +79,12 @@ export interface Task {
     avatar: string;
     email?: string;
   } | null;
+  assignees?: {
+    id: string;
+    name: string;
+    avatar: string;
+    email?: string;
+  }[];
   creator?: {
     id: string;
     name: string;

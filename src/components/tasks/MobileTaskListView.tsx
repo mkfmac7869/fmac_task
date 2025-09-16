@@ -207,8 +207,24 @@ const MobileTaskListView = ({
             </div>
           )}
           
-          {/* Assignee */}
-          {task.assignee ? (
+          {/* Multiple Assignees */}
+          {task.assignees && task.assignees.length > 0 ? (
+            <div className="flex items-center gap-1">
+              {task.assignees.slice(0, 2).map((assignee) => (
+                <Avatar key={assignee.id} className="h-5 w-5">
+                  <AvatarImage src={assignee.avatar} />
+                  <AvatarFallback className="text-[10px]">
+                    {assignee.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+              ))}
+              {task.assignees.length > 2 && (
+                <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-[10px] text-gray-600">+{task.assignees.length - 2}</span>
+                </div>
+              )}
+            </div>
+          ) : task.assignee ? (
             <div className="flex items-center gap-1.5">
               <Avatar className="h-5 w-5">
                 <AvatarImage src={task.assignee.avatar} />
