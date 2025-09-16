@@ -18,7 +18,6 @@ import { TaskStatus, Task } from '@/types/task';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTaskFilters } from '@/hooks/useTaskFilters';
 import { exportFilteredTasksToExcel } from '@/utils/excelExport';
-import { toast } from '@/hooks/use-toast';
 
 const Tasks = () => {
   const navigate = useNavigate();
