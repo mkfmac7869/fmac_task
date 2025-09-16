@@ -26,6 +26,7 @@ import Settings from './pages/Settings';
 import MemberManagement from './pages/MemberManagement';
 import DepartmentManagement from './pages/DepartmentManagement';
 import NotFound from './pages/NotFound';
+import DebugActivities from './pages/DebugActivities';
 
 // Component to initialize push notifications
 function PushNotificationInitializer() {
@@ -73,6 +74,7 @@ function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/member-management" element={<MemberManagement />} />
               <Route path="/department-management" element={<DepartmentManagement />} />
+              <Route path="/debug-activities" element={<DebugActivities />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />

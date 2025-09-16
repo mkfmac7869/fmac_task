@@ -74,6 +74,7 @@ import {
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { FirebaseService } from '@/lib/firebaseService';
 import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
+import { debugActivities } from '@/utils/debugActivities';
 
 interface Activity {
   id: string;
@@ -186,6 +187,9 @@ const ClickUpTaskDetails = () => {
 
       // Load activities from Firebase - try multiple approaches
       console.log('Loading activities for taskId:', taskId);
+      
+      // Debug activities to see what's happening
+      await debugActivities(taskId);
       
       try {
         // First try with getDocumentsOrdered
