@@ -74,6 +74,7 @@ import {
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { FirebaseService } from '@/lib/firebaseService';
 import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
+import { testActivitiesQuery } from '@/utils/testActivities';
 
 interface Activity {
   id: string;
@@ -186,10 +187,16 @@ const ClickUpTaskDetails = () => {
       })))
 
       // Load activities from Firebase - try multiple approaches
-      console.log('Loading activities for taskId:', taskId);
+      console.log('=== LOADING ACTIVITIES ===');
+      console.log('Task ID:', taskId);
+      console.log('Current Task:', currentTask);
+      
+      // Run test query to debug
+      await testActivitiesQuery();
       
       try {
         // First try with getDocumentsOrdered
+        console.log('Querying activities with filters:', [{ field: 'taskId', operator: '==', value: taskId }]);
         const activitiesData = await FirebaseService.getDocumentsOrdered(
           'activities',
           'timestamp',
@@ -198,6 +205,7 @@ const ClickUpTaskDetails = () => {
         );
         
         console.log('Activities query result:', activitiesData);
+        console.log('Number of activities found:', activitiesData?.length || 0);
         
         // Also try a simple getDocuments query as backup
         if (!activitiesData || activitiesData.length === 0) {
@@ -215,7 +223,7 @@ const ClickUpTaskDetails = () => {
               return bTime.getTime() - aTime.getTime();
             });
             
-            setActivities(altActivities.map((a: any) => ({
+            const processedAltActivities = altActivities.map((a: any) => ({
               id: a.id,
               type: a.type || 'status_change',
               userId: a.userId || a.user_id,
@@ -225,13 +233,16 @@ const ClickUpTaskDetails = () => {
               oldValue: a.oldValue,
               newValue: a.newValue,
               timestamp: a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp)
-            })));
+            }));
+            console.log('Setting activities from alt query:', processedAltActivities);
+            setActivities(processedAltActivities);
             return;
           }
         }
         
         if (activitiesData && activitiesData.length > 0) {
-          setActivities(activitiesData.map((a: any) => ({
+          console.log('Processing activities data...');
+          const processedActivities = activitiesData.map((a: any) => ({
             id: a.id,
             type: a.type || 'status_change',
             userId: a.userId || a.user_id,
@@ -241,7 +252,10 @@ const ClickUpTaskDetails = () => {
             oldValue: a.oldValue,
             newValue: a.newValue,
             timestamp: a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp)
-          })));
+          }));
+          console.log('Processed activities:', processedActivities);
+          setActivities(processedActivities);
+          console.log('Activities state should now be updated');
         } else {
           // If no activities exist, create the initial "created" activity
           console.log('No activities found, creating initial activity...');
@@ -1116,6 +1130,7 @@ const ClickUpTaskDetails = () => {
 
                   <TabsContent value="activity" className="mt-4">
                     <div className="space-y-4">
+                      {console.log('Rendering activities tab, activities state:', activities)}
                       {activities.length > 0 ? (
                         activities.map((activity) => {
                           let icon = null;
