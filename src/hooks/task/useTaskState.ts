@@ -116,7 +116,7 @@ export const useTaskState = () => {
               createdAt: task.created_at,
               tags: task.tags || [],
               comments: parseJSON(task.comments) || [],
-              attachments: parseJSON(task.attachments) || [],
+              attachments: [], // Attachments are loaded separately from attachments collection
               subtasks: parseJSON(task.subtasks) || [],
               checklists: parseJSON(task.checklists) || []
             };

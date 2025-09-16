@@ -224,10 +224,8 @@ const ClickUpTaskPanel = ({
           filePath: filePath // Store the path for potential deletion later
         });
         
-        // Update local state and task
-        const updatedAttachments = [...attachments, attachment];
-        setAttachments(updatedAttachments);
-        onUpdateTask(task.id, { attachments: updatedAttachments });
+        // Just reload attachments from Firestore to get the new attachment
+        await loadAttachments();
         
         toast({
           title: "File Attached",

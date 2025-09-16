@@ -604,10 +604,8 @@ const ClickUpTaskDetails = () => {
           filePath: filePath // Store the path for potential deletion later
         });
         
-        // Update local state and task
-        const updatedAttachments = [...attachments, attachment];
-        setAttachments(updatedAttachments);
-        updateTask(task.id, { attachments: updatedAttachments });
+        // Reload attachments from Firestore to show the new attachment
+        await loadTaskRelatedData(task.id, task);
         
         // Add activity
         await addActivity('attachment', `attached ${file.name}`);
