@@ -96,7 +96,13 @@ const EditProjectDialog = ({ project, isOpen, onOpenChange }: EditProjectDialogP
     field: keyof ProjectFormData
   ) => {
     if (typeof e === 'string') {
-      setFormData((prev) => ({ ...prev, [field]: e }));
+      if (field === 'departmentId') {
+        // If "All Departments" is selected, set to null for database storage
+        const departmentValue = e === 'all' ? null : e;
+        setFormData((prev) => ({ ...prev, [field]: departmentValue }));
+      } else {
+        setFormData((prev) => ({ ...prev, [field]: e }));
+      }
     } else {
       setFormData((prev) => ({ ...prev, [field]: e.target.value }));
     }
@@ -202,7 +208,7 @@ const EditProjectDialog = ({ project, isOpen, onOpenChange }: EditProjectDialogP
                 Department
               </label>
               <Select
-                value={formData.departmentId || undefined}
+                value={formData.departmentId || 'all'}
                 onValueChange={(value) => handleChange(value, 'departmentId')}
               >
                 <SelectTrigger>
@@ -286,32 +292,51 @@ const EditProjectDialog = ({ project, isOpen, onOpenChange }: EditProjectDialogP
               {showMemberSelector && (
                 <div className="border rounded-md p-3 max-h-48 overflow-y-auto">
                   <div className="space-y-2">
-                    {membersList.map((member) => {
-                      const isSelected = formData.members.some(m => m.id === member.id);
-                      return (
-                        <div key={member.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`member-${member.id}`}
-                            checked={isSelected}
-                            onCheckedChange={() => handleMemberToggle(member)}
-                          />
-                          <label
-                            htmlFor={`member-${member.id}`}
-                            className="flex items-center space-x-2 cursor-pointer flex-1"
-                          >
-                            <img 
-                              src={member.avatar} 
-                              alt={member.name}
-                              className="h-6 w-6 rounded-full"
+                    {membersList
+                      .filter((member) => {
+                        // If no department is selected (null), show all members
+                        if (!formData.departmentId) {
+                          return true;
+                        }
+                        // Otherwise, filter by the selected department
+                        return member.department === formData.departmentId;
+                      })
+                      .map((member) => {
+                        const isSelected = formData.members.some(m => m.id === member.id);
+                        return (
+                          <div key={member.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`member-${member.id}`}
+                              checked={isSelected}
+                              onCheckedChange={() => handleMemberToggle(member)}
                             />
-                            <div>
-                              <div className="text-sm font-medium">{member.name}</div>
-                              <div className="text-xs text-gray-500">{member.role} • {member.department}</div>
-                            </div>
-                          </label>
-                        </div>
-                      );
-                    })}
+                            <label
+                              htmlFor={`member-${member.id}`}
+                              className="flex items-center space-x-2 cursor-pointer flex-1"
+                            >
+                              <img 
+                                src={member.avatar} 
+                                alt={member.name}
+                                className="h-6 w-6 rounded-full"
+                              />
+                              <div>
+                                <div className="text-sm font-medium">{member.name}</div>
+                                <div className="text-xs text-gray-500">{member.role} • {member.department}</div>
+                              </div>
+                            </label>
+                          </div>
+                        );
+                      })}
+                    {membersList.filter((member) => {
+                      if (!formData.departmentId) {
+                        return true;
+                      }
+                      return member.department === formData.departmentId;
+                    }).length === 0 && (
+                      <div className="text-center py-4 text-sm text-gray-500">
+                        No members found in selected department
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
