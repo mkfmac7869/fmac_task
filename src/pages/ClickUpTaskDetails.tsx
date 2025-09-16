@@ -72,7 +72,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { FirebaseService } from '@/lib/firebaseService';
+import { FirebaseService, TaskService } from '@/lib/firebaseService';
 import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
 import { testActivitiesQuery } from '@/utils/testActivities';
 
@@ -159,6 +159,12 @@ const ClickUpTaskDetails = () => {
     }
   }, [taskId, tasks, isLoading, getTaskById, navigate]);
 
+  // Debug: Log when activities state changes
+  useEffect(() => {
+    console.log('Activities state updated:', activities);
+    console.log('Number of activities in state:', activities.length);
+  }, [activities]);
+
   const loadTaskRelatedData = async (taskId: string, currentTask?: Task) => {
     try {
       // Load comments
@@ -195,16 +201,11 @@ const ClickUpTaskDetails = () => {
       await testActivitiesQuery();
       
       try {
-        // First try with getDocumentsOrdered
-        console.log('Querying activities with filters:', [{ field: 'taskId', operator: '==', value: taskId }]);
-        const activitiesData = await FirebaseService.getDocumentsOrdered(
-          'activities',
-          'timestamp',
-          'desc',
-          [{ field: 'taskId', operator: '==', value: taskId }]
-        );
+        // Use TaskService.getActivities which is the same method used to save activities
+        console.log('Using TaskService.getActivities for taskId:', taskId);
+        const activitiesData = await TaskService.getActivities(taskId);
         
-        console.log('Activities query result:', activitiesData);
+        console.log('TaskService.getActivities result:', activitiesData);
         console.log('Number of activities found:', activitiesData?.length || 0);
         
         // Also try a simple getDocuments query as backup
@@ -242,17 +243,38 @@ const ClickUpTaskDetails = () => {
         
         if (activitiesData && activitiesData.length > 0) {
           console.log('Processing activities data...');
-          const processedActivities = activitiesData.map((a: any) => ({
-            id: a.id,
-            type: a.type || 'status_change',
-            userId: a.userId || a.user_id,
-            userName: a.userName || 'Unknown User',
-            userAvatar: a.userAvatar || '/placeholder.svg',
-            description: a.description || a.action || 'made changes',
-            oldValue: a.oldValue,
-            newValue: a.newValue,
-            timestamp: a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp)
-          }));
+          console.log('Raw activities data:', activitiesData);
+          
+          const processedActivities = activitiesData.map((a: any) => {
+            console.log('Processing activity:', a);
+            
+            // Handle timestamp conversion carefully
+            let timestamp = new Date();
+            if (a.timestamp) {
+              if (a.timestamp.toDate && typeof a.timestamp.toDate === 'function') {
+                timestamp = a.timestamp.toDate();
+              } else if (a.timestamp.seconds) {
+                timestamp = new Date(a.timestamp.seconds * 1000);
+              } else if (typeof a.timestamp === 'string') {
+                timestamp = new Date(a.timestamp);
+              } else if (a.timestamp instanceof Date) {
+                timestamp = a.timestamp;
+              }
+            }
+            
+            return {
+              id: a.id,
+              type: a.type || 'status_change',
+              userId: a.userId || a.user_id,
+              userName: a.userName || 'Unknown User',
+              userAvatar: a.userAvatar || '/placeholder.svg',
+              description: a.description || a.action || 'made changes',
+              oldValue: a.oldValue,
+              newValue: a.newValue,
+              timestamp: timestamp
+            };
+          });
+          
           console.log('Processed activities:', processedActivities);
           setActivities(processedActivities);
           console.log('Activities state should now be updated');

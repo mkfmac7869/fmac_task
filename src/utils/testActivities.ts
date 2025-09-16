@@ -10,8 +10,12 @@ export const testActivitiesQuery = async () => {
     console.log('Total activities in database:', allActivities.length);
     
     if (allActivities.length > 0) {
-      console.log('Sample activity:', allActivities[0]);
-      console.log('All taskIds:', allActivities.map(a => a.taskId));
+      console.log('First 3 activities full structure:');
+      allActivities.slice(0, 3).forEach((activity, index) => {
+        console.log(`Activity ${index + 1}:`, JSON.stringify(activity, null, 2));
+      });
+      
+      console.log('\nAll unique taskIds in activities:', [...new Set(allActivities.map(a => a.taskId))]);
       
       // Group by taskId
       const activitiesByTask = allActivities.reduce((acc: any, activity: any) => {
@@ -23,7 +27,7 @@ export const testActivitiesQuery = async () => {
       
       console.log('\nActivities grouped by taskId:');
       Object.entries(activitiesByTask).forEach(([taskId, activities]: [string, any]) => {
-        console.log(`Task ${taskId}: ${activities.length} activities`);
+        console.log(`Task "${taskId}": ${activities.length} activities`);
       });
     }
     
