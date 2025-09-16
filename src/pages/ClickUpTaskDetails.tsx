@@ -74,7 +74,6 @@ import {
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { FirebaseService } from '@/lib/firebaseService';
 import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
-import { debugActivities } from '@/utils/debugActivities';
 
 interface Activity {
   id: string;
@@ -152,14 +151,14 @@ const ClickUpTaskDetails = () => {
         // Don't initialize attachments from task - we'll load from Firestore
         setAttachments([]);
         // Load related data (in production, this would come from Firebase)
-        loadTaskRelatedData(taskId);
+        loadTaskRelatedData(taskId, foundTask);
       } else {
         navigate('/tasks');
       }
     }
   }, [taskId, tasks, isLoading, getTaskById, navigate]);
 
-  const loadTaskRelatedData = async (taskId: string) => {
+  const loadTaskRelatedData = async (taskId: string, currentTask?: Task) => {
     try {
       // Load comments
       const commentsData = await FirebaseService.getDocuments('comments', [
@@ -188,9 +187,6 @@ const ClickUpTaskDetails = () => {
 
       // Load activities from Firebase - try multiple approaches
       console.log('Loading activities for taskId:', taskId);
-      
-      // Debug activities to see what's happening
-      await debugActivities(taskId);
       
       try {
         // First try with getDocumentsOrdered
@@ -249,14 +245,36 @@ const ClickUpTaskDetails = () => {
         } else {
           // If no activities exist, create the initial "created" activity
           console.log('No activities found, creating initial activity...');
+          
+          // Use the task passed as parameter or the current task state
+          const taskToUse = currentTask || task;
+          
+          // Get creator info
+          let creatorId = taskToUse?.creator?.id || (taskToUse as any)?.created_by || user?.id || 'system';
+          let creatorName = taskToUse?.creator?.name || 'Unknown User';
+          let creatorAvatar = taskToUse?.creator?.avatar || '/placeholder.svg';
+          
+          // If we only have creator ID but not full creator info, fetch it
+          if (!taskToUse?.creator && creatorId && creatorId !== 'system') {
+            try {
+              const creatorProfile = await FirebaseService.getDocument('profiles', creatorId);
+              if (creatorProfile) {
+                creatorName = creatorProfile.name || 'Unknown User';
+                creatorAvatar = creatorProfile.avatar || `/placeholder.svg`;
+              }
+            } catch (error) {
+              console.log('Could not fetch creator profile:', error);
+            }
+          }
+          
           const createdActivity: Activity = {
             id: Date.now().toString(),
             type: 'status_change',
-            userId: task?.creator?.id || user?.id || 'system',
-            userName: task?.creator?.name || user?.name || 'System',
-            userAvatar: task?.creator?.avatar || user?.avatar || '/placeholder.svg',
+            userId: creatorId,
+            userName: creatorName,
+            userAvatar: creatorAvatar,
             description: 'created this task',
-            timestamp: new Date(task?.createdAt || Date.now())
+            timestamp: taskToUse?.createdAt ? new Date(taskToUse.createdAt) : new Date()
           };
           
           // Save the initial activity
@@ -612,7 +630,7 @@ const ClickUpTaskDetails = () => {
       await addActivity('attachment', `removed ${attachmentToDelete.name}`);
 
       // Reload attachments from Firestore to ensure consistency
-      await loadTaskRelatedData(task.id);
+      await loadTaskRelatedData(task.id, task);
 
       toast({
         title: "Attachment Deleted",
