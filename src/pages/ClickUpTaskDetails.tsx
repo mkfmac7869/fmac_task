@@ -659,6 +659,16 @@ const ClickUpTaskDetails = () => {
       console.log('All attachment docs:', allAttachmentDocs);
       console.log('Looking for attachment with ID:', attachmentToDelete.id);
       
+      // Log all document IDs for debugging
+      allAttachmentDocs.forEach((doc, index) => {
+        console.log(`Doc ${index}:`, {
+          id: doc.id,
+          name: doc.name,
+          url: doc.url,
+          taskId: doc.taskId
+        });
+      });
+      
       const toDelete = allAttachmentDocs.find(doc => 
         doc.id === attachmentToDelete.id || 
         (doc.name === attachmentToDelete.name && doc.url === attachmentToDelete.url)
@@ -668,8 +678,17 @@ const ClickUpTaskDetails = () => {
       
       if (toDelete) {
         console.log('Deleting from Firestore with ID:', toDelete.id);
+        console.log('Document path:', `attachments/${toDelete.id}`);
         await FirebaseService.deleteDocument('attachments', toDelete.id);
         console.log('Successfully deleted from Firestore');
+        
+        // Verify deletion by checking if document still exists
+        try {
+          const verifyDoc = await FirebaseService.getDocument('attachments', toDelete.id);
+          console.log('Verification - document still exists:', verifyDoc);
+        } catch (e) {
+          console.log('Verification - document successfully deleted (not found)');
+        }
         
         if (toDelete.filePath) {
           try {
@@ -693,7 +712,17 @@ const ClickUpTaskDetails = () => {
         { field: 'taskId', operator: '==', value: task.id }
       ]);
       console.log('Updated attachments from Firestore:', updatedAttachments);
-      setAttachments(updatedAttachments.map((a: any) => ({
+      
+      // MANUAL CLEANUP: Remove any attachments that match the deleted one
+      const cleanedAttachments = updatedAttachments.filter((a: any) => 
+        a.id !== attachmentToDelete.id && 
+        a.name !== attachmentToDelete.name &&
+        a.url !== attachmentToDelete.url
+      );
+      
+      console.log('Cleaned attachments (removed deleted):', cleanedAttachments);
+      
+      setAttachments(cleanedAttachments.map((a: any) => ({
         id: a.id,
         name: a.name,
         size: a.size,
@@ -702,7 +731,7 @@ const ClickUpTaskDetails = () => {
         uploadedBy: a.uploadedBy,
         uploadedAt: a.uploadedAt
       })));
-      console.log('Set attachments to:', updatedAttachments.map((a: any) => a.name));
+      console.log('Set attachments to:', cleanedAttachments.map((a: any) => a.name));
     } catch (error) {
       console.error('Error during deletion:', error);
     }

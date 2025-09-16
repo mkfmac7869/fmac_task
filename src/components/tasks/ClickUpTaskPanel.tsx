@@ -320,7 +320,17 @@ const ClickUpTaskPanel = ({
         { field: 'taskId', operator: '==', value: task.id }
       ]);
       console.log('Updated attachments from Firestore:', updatedAttachments);
-      setAttachments(updatedAttachments.map((a: any) => ({
+      
+      // MANUAL CLEANUP: Remove any attachments that match the deleted one
+      const cleanedAttachments = updatedAttachments.filter((a: any) => 
+        a.id !== attachmentToDelete.id && 
+        a.name !== attachmentToDelete.name &&
+        a.url !== attachmentToDelete.url
+      );
+      
+      console.log('Cleaned attachments (removed deleted):', cleanedAttachments);
+      
+      setAttachments(cleanedAttachments.map((a: any) => ({
         id: a.id,
         name: a.name,
         size: a.size,
@@ -329,7 +339,7 @@ const ClickUpTaskPanel = ({
         uploadedBy: a.uploadedBy,
         uploadedAt: a.uploadedAt
       })));
-      console.log('Set attachments to:', updatedAttachments.map((a: any) => a.name));
+      console.log('Set attachments to:', cleanedAttachments.map((a: any) => a.name));
     } catch (error) {
       console.error('Error during deletion:', error);
     }
