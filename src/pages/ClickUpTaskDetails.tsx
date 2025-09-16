@@ -827,7 +827,7 @@ const ClickUpTaskDetails = () => {
       });
 
       // Add activity
-      await addActivity('completion', `completed task with evidence: ${evidence.substring(0, 50)}${evidence.length > 50 ? '...' : ''}`);
+      await addActivity('status_change', `completed task with evidence: ${evidence.substring(0, 50)}${evidence.length > 50 ? '...' : ''}`);
 
       // Save completion attachments to Firebase Storage and Firestore
       for (const attachment of completionAttachments) {
