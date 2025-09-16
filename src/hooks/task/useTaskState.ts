@@ -33,61 +33,132 @@ export const useTaskState = () => {
         });
         
         if (!user.roles?.includes('admin')) {
-          // Non-admin users can only see tasks assigned to them or created by them
-          console.log("Non-admin user - fetching tasks assigned to or created by user");
+          // Check if user is a department head
+          const isDeptHead = user.roles?.includes('head');
           
-          // Get all tasks first, then filter client-side for assignees array
-          const allTasks = await FirebaseService.getDocuments('tasks');
-          
-          // Filter tasks where user is assigned (either in assignees array or old assigned_to field) or created by user
-          const userTasks = allTasks.filter(task => {
-            // Check if user created the task
-            const isCreator = task.created_by === user.id;
+          if (isDeptHead) {
+            console.log("Department Head - fetching all tasks for department:", user.department);
             
-            // Check if user is in old assigned_to field
-            const isAssignedTo = task.assigned_to === user.id;
+            // Get all tasks first, then filter for department
+            const allTasks = await FirebaseService.getDocuments('tasks');
             
-            // Check if user is in new assignees array
-            let isInAssignees = false;
-            let assigneesData = null;
-            if (task.assignees) {
-              try {
-                assigneesData = JSON.parse(task.assignees);
-                isInAssignees = Array.isArray(assigneesData) && assigneesData.some(assignee => assignee.id === user.id);
-              } catch (e) {
-                console.error("Error parsing assignees:", e);
+            // Department heads can see:
+            // 1. Tasks assigned to anyone in their department
+            // 2. Tasks created by anyone in their department  
+            // 3. Tasks assigned to themselves
+            // 4. Tasks created by themselves
+            const deptTasks = allTasks.filter(task => {
+              // Check if user created the task
+              const isCreator = task.created_by === user.id;
+              
+              // Check if user is assigned to the task
+              const isAssignedTo = task.assigned_to === user.id;
+              let isInAssignees = false;
+              if (task.assignees) {
+                try {
+                  const assigneesData = JSON.parse(task.assignees);
+                  isInAssignees = Array.isArray(assigneesData) && assigneesData.some(assignee => assignee.id === user.id);
+                } catch (e) {
+                  console.error("Error parsing assignees:", e);
+                }
               }
-            }
+              
+              // Check if task is assigned to someone in the same department
+              let isDeptAssignment = false;
+              if (task.assignees) {
+                try {
+                  const assigneesData = JSON.parse(task.assignees);
+                  // For now, we'll include all tasks since we don't have department info in assignees
+                  // This will be improved when we add department info to assignees
+                  isDeptAssignment = Array.isArray(assigneesData) && assigneesData.length > 0;
+                } catch (e) {
+                  console.error("Error parsing assignees:", e);
+                }
+              }
+              
+              // Include task if user is involved OR if it's assigned to department members
+              const shouldInclude = isCreator || isAssignedTo || isInAssignees || isDeptAssignment;
+              
+              if (shouldInclude) {
+                console.log(`Dept Head - Including task "${task.title}":`, {
+                  taskId: task.id,
+                  isCreator,
+                  isAssignedTo,
+                  isInAssignees,
+                  isDeptAssignment
+                });
+              }
+              
+              return shouldInclude;
+            });
             
-            // Debug logging for each task
-            const shouldInclude = isCreator || isAssignedTo || isInAssignees;
-            if (task.title && (task.title.includes('dscds') || task.title.includes('Fujairah') || shouldInclude)) {
-              console.log(`Task "${task.title}" check:`, {
-                taskId: task.id,
-                userId: user.id,
-                userName: user.name,
-                isCreator,
-                isAssignedTo,
-                isInAssignees,
-                shouldInclude,
-                taskCreatedBy: task.created_by,
-                taskAssignedTo: task.assigned_to,
-                taskAssignees: assigneesData,
-                rawAssignees: task.assignees
-              });
-            }
+            console.log("Department Head tasks filtered:", {
+              userId: user.id,
+              userName: user.name,
+              department: user.department,
+              totalTasks: allTasks.length,
+              deptTasks: deptTasks.length,
+              deptTaskIds: deptTasks.map(t => t.id)
+            });
             
-            return shouldInclude;
-          });
-          
-          console.log("Filtered tasks for user:", {
-            userId: user.id,
-            totalTasks: allTasks.length,
-            userTasks: userTasks.length,
-            userTaskIds: userTasks.map(t => t.id)
-          });
-          
-          data = userTasks;
+            data = deptTasks;
+          } else {
+            // Regular members can only see tasks assigned to them or created by them
+            console.log("Regular member - fetching tasks assigned to or created by user");
+            
+            // Get all tasks first, then filter client-side for assignees array
+            const allTasks = await FirebaseService.getDocuments('tasks');
+            
+            // Filter tasks where user is assigned (either in assignees array or old assigned_to field) or created by user
+            const userTasks = allTasks.filter(task => {
+              // Check if user created the task
+              const isCreator = task.created_by === user.id;
+              
+              // Check if user is in old assigned_to field
+              const isAssignedTo = task.assigned_to === user.id;
+              
+              // Check if user is in new assignees array
+              let isInAssignees = false;
+              let assigneesData = null;
+              if (task.assignees) {
+                try {
+                  assigneesData = JSON.parse(task.assignees);
+                  isInAssignees = Array.isArray(assigneesData) && assigneesData.some(assignee => assignee.id === user.id);
+                } catch (e) {
+                  console.error("Error parsing assignees:", e);
+                }
+              }
+              
+              // Debug logging for each task
+              const shouldInclude = isCreator || isAssignedTo || isInAssignees;
+              if (task.title && (task.title.includes('dscds') || task.title.includes('Fujairah') || shouldInclude)) {
+                console.log(`Regular Member - Task "${task.title}" check:`, {
+                  taskId: task.id,
+                  userId: user.id,
+                  userName: user.name,
+                  isCreator,
+                  isAssignedTo,
+                  isInAssignees,
+                  shouldInclude,
+                  taskCreatedBy: task.created_by,
+                  taskAssignedTo: task.assigned_to,
+                  taskAssignees: assigneesData,
+                  rawAssignees: task.assignees
+                });
+              }
+              
+              return shouldInclude;
+            });
+            
+            console.log("Regular Member - Filtered tasks for user:", {
+              userId: user.id,
+              totalTasks: allTasks.length,
+              userTasks: userTasks.length,
+              userTaskIds: userTasks.map(t => t.id)
+            });
+            
+            data = userTasks;
+          }
         } else {
           console.log("Admin user - fetching all tasks");
           console.log("Admin user - fetching ALL tasks");
