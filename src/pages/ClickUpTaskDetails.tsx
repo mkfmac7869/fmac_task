@@ -149,7 +149,8 @@ const ClickUpTaskDetails = () => {
         setSubtasks(foundTask.subtasks || []);
         setChecklists(foundTask.checklists || []);
         setComments(foundTask.comments || []);
-        setAttachments(foundTask.attachments || []);
+        // Don't initialize attachments from task - we'll load from Firestore
+        setAttachments([]);
         // Load related data (in production, this would come from Firebase)
         loadTaskRelatedData(taskId);
       } else {
@@ -169,21 +170,21 @@ const ClickUpTaskDetails = () => {
         createdAt: c.createdAt?.toDate() || new Date()
       })));
 
-      // Load attachments from Firebase
+      // Load attachments from Firebase - this is the source of truth
       const attachmentsData = await FirebaseService.getDocuments('attachments', [
         { field: 'taskId', operator: '==', value: taskId }
       ]);
-      if (attachmentsData && attachmentsData.length > 0) {
-        setAttachments(attachmentsData.map((a: any) => ({
-          id: a.id,
-          name: a.name,
-          size: a.size,
-          type: a.type,
-          url: a.url,
-          uploadedBy: a.uploadedBy,
-          uploadedAt: a.uploadedAt
-        })));
-      }
+      
+      // Always use attachments from Firestore as the source of truth
+      setAttachments(attachmentsData.map((a: any) => ({
+        id: a.id,
+        name: a.name,
+        size: a.size,
+        type: a.type,
+        url: a.url,
+        uploadedBy: a.uploadedBy,
+        uploadedAt: a.uploadedAt
+      })))
 
       // Load activities from Firebase - try multiple approaches
       console.log('Loading activities for taskId:', taskId);
@@ -607,13 +608,11 @@ const ClickUpTaskDetails = () => {
         await FirebaseService.deleteDocument('attachments', attachmentDocs[0].id);
       }
 
-      // Update local state and task
-      const updatedAttachments = attachments.filter(att => att.id !== attachmentToDelete.id);
-      setAttachments(updatedAttachments);
-      updateTask(task.id, { attachments: updatedAttachments });
-
       // Add activity
       await addActivity('attachment', `removed ${attachmentToDelete.name}`);
+
+      // Reload attachments from Firestore to ensure consistency
+      await loadTaskRelatedData(task.id);
 
       toast({
         title: "Attachment Deleted",

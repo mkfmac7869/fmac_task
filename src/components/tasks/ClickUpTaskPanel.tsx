@@ -110,10 +110,31 @@ const ClickUpTaskPanel = ({
   useEffect(() => {
     if (task) {
       setComments(task.comments || []);
-      setAttachments(task.attachments || []);
+      // Don't initialize attachments from task - we'll load from Firestore
       setTags(task.tags || []);
+      loadAttachments();
     }
   }, [task]);
+
+  const loadAttachments = async () => {
+    if (!task) return;
+    try {
+      const attachmentsData = await FirebaseService.getDocuments('attachments', [
+        { field: 'taskId', operator: '==', value: task.id }
+      ]);
+      setAttachments(attachmentsData.map((a: any) => ({
+        id: a.id,
+        name: a.name,
+        size: a.size,
+        type: a.type,
+        url: a.url,
+        uploadedBy: a.uploadedBy,
+        uploadedAt: a.uploadedAt
+      })));
+    } catch (error) {
+      console.error('Error loading attachments:', error);
+    }
+  };
 
   if (!task || !isOpen) return null;
 
@@ -275,10 +296,8 @@ const ClickUpTaskPanel = ({
         await FirebaseService.deleteDocument('attachments', attachmentDocs[0].id);
       }
 
-      // Update local state and task
-      const updatedAttachments = attachments.filter(att => att.id !== attachmentToDelete.id);
-      setAttachments(updatedAttachments);
-      onUpdateTask(task.id, { attachments: updatedAttachments });
+      // Reload attachments from Firestore to ensure consistency
+      await loadAttachments();
 
       toast({
         title: "Attachment Deleted",
