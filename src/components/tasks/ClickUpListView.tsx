@@ -176,7 +176,7 @@ const ClickUpListView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpListViewPr
       {/* Column headers */}
       <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-gray-50 via-white to-gray-50 text-xs font-semibold text-gray-700 shadow-sm">
         <div className="col-span-4">Name</div>
-        <div className="col-span-2">Assignee</div>
+        <div className="col-span-2">Assignees</div>
         <div className="col-span-2">Project</div>
         <div className="col-span-1">Due date</div>
         <div className="col-span-2">Priority</div>
@@ -269,9 +269,31 @@ const ClickUpListView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpListViewPr
                         </span>
                       </div>
 
-                      {/* Assignee */}
+                      {/* Assignees */}
                       <div className="col-span-2 flex items-center">
-                        {task.assignee ? (
+                        {task.assignees && task.assignees.length > 0 ? (
+                          <div className="flex items-center gap-1">
+                            {task.assignees.slice(0, 3).map((assignee, index) => (
+                              <Avatar key={assignee.id} className="h-6 w-6 border-2 border-white" style={{ marginLeft: index > 0 ? '-8px' : '0' }}>
+                                <AvatarImage src={assignee.avatar} />
+                                <AvatarFallback className="text-xs">
+                                  {assignee.name.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                            ))}
+                            {task.assignees.length > 3 && (
+                              <div className="h-6 w-6 bg-gray-200 rounded-full flex items-center justify-center text-xs text-gray-600 border-2 border-white" style={{ marginLeft: '-8px' }}>
+                                +{task.assignees.length - 3}
+                              </div>
+                            )}
+                            <span className="text-sm text-gray-700 truncate hidden lg:block ml-2">
+                              {task.assignees.length === 1 
+                                ? task.assignees[0].name 
+                                : `${task.assignees.length} members`
+                              }
+                            </span>
+                          </div>
+                        ) : task.assignee ? (
                           <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
                               <AvatarImage src={task.assignee.avatar} />

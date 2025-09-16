@@ -110,8 +110,12 @@ const ClickUpTableView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpTableView
     let bValue: any = b[sortField];
 
     if (sortField === 'assignee') {
-      aValue = a.assignee?.name || '';
-      bValue = b.assignee?.name || '';
+      aValue = a.assignees && a.assignees.length > 0 
+        ? a.assignees[0].name 
+        : a.assignee?.name || '';
+      bValue = b.assignees && b.assignees.length > 0 
+        ? b.assignees[0].name 
+        : b.assignee?.name || '';
     }
     
     if (sortField === 'project') {
@@ -170,7 +174,7 @@ const ClickUpTableView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpTableView
               </th>
               <TableHeader field="title">Task Name</TableHeader>
               <TableHeader field="status">Status</TableHeader>
-              <TableHeader field="assignee">Assignee</TableHeader>
+              <TableHeader field="assignee">Assignees</TableHeader>
               <TableHeader field="project">Project</TableHeader>
               <TableHeader field="dueDate">Due Date</TableHeader>
               <TableHeader field="priority">Priority</TableHeader>
@@ -239,9 +243,33 @@ const ClickUpTableView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpTableView
                   </DropdownMenu>
                 </td>
 
-                {/* Assignee */}
+                {/* Assignees */}
                 <td className="px-4 py-3">
-                  {task.assignee ? (
+                  {task.assignees && task.assignees.length > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center">
+                        {task.assignees.slice(0, 3).map((assignee, index) => (
+                          <Avatar key={assignee.id} className="h-6 w-6 border-2 border-white" style={{ marginLeft: index > 0 ? '-8px' : '0' }}>
+                            <AvatarImage src={assignee.avatar} />
+                            <AvatarFallback className="text-xs">
+                              {assignee.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
+                        {task.assignees.length > 3 && (
+                          <div className="h-6 w-6 bg-gray-200 rounded-full flex items-center justify-center text-xs text-gray-600 border-2 border-white" style={{ marginLeft: '-8px' }}>
+                            +{task.assignees.length - 3}
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-sm text-gray-700">
+                        {task.assignees.length === 1 
+                          ? task.assignees[0].name 
+                          : `${task.assignees.length} members`
+                        }
+                      </span>
+                    </div>
+                  ) : task.assignee ? (
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={task.assignee.avatar} />

@@ -289,24 +289,42 @@ const ClickUpBoardView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpBoardView
             </div>
           </div>
 
-          {/* Assignee */}
-          {task.assignee ? (
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={task.assignee.avatar} />
-              <AvatarFallback className="text-xs">
-                {task.assignee.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 rounded-full border-2 border-dashed border-gray-300"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <User className="h-3 w-3 text-gray-400" />
-            </Button>
-          )}
+          {/* Assignees */}
+          <div className="flex items-center justify-end">
+            {task.assignees && task.assignees.length > 0 ? (
+              <div className="flex items-center">
+                {task.assignees.slice(0, 3).map((assignee, index) => (
+                  <Avatar key={assignee.id} className="h-6 w-6 border-2 border-white" style={{ marginLeft: index > 0 ? '-8px' : '0' }}>
+                    <AvatarImage src={assignee.avatar} />
+                    <AvatarFallback className="text-xs">
+                      {assignee.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+                {task.assignees.length > 3 && (
+                  <div className="h-6 w-6 bg-gray-200 rounded-full flex items-center justify-center text-xs text-gray-600 border-2 border-white" style={{ marginLeft: '-8px' }}>
+                    +{task.assignees.length - 3}
+                  </div>
+                )}
+              </div>
+            ) : task.assignee ? (
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={task.assignee.avatar} />
+                <AvatarFallback className="text-xs">
+                  {task.assignee.name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 rounded-full border-2 border-dashed border-gray-300"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <User className="h-3 w-3 text-gray-400" />
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Progress bar */}
