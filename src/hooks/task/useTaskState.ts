@@ -26,7 +26,10 @@ export const useTaskState = () => {
         console.log("User roles check:", { 
           roles: user.roles, 
           isAdmin: user.roles?.includes('admin'),
-          user: user
+          userId: user.id,
+          userName: user.name,
+          userEmail: user.email,
+          fullUser: user
         });
         
         if (!user.roles?.includes('admin')) {
@@ -46,16 +49,35 @@ export const useTaskState = () => {
             
             // Check if user is in new assignees array
             let isInAssignees = false;
+            let assigneesData = null;
             if (task.assignees) {
               try {
-                const assignees = JSON.parse(task.assignees);
-                isInAssignees = Array.isArray(assignees) && assignees.some(assignee => assignee.id === user.id);
+                assigneesData = JSON.parse(task.assignees);
+                isInAssignees = Array.isArray(assigneesData) && assigneesData.some(assignee => assignee.id === user.id);
               } catch (e) {
                 console.error("Error parsing assignees:", e);
               }
             }
             
-            return isCreator || isAssignedTo || isInAssignees;
+            // Debug logging for each task
+            const shouldInclude = isCreator || isAssignedTo || isInAssignees;
+            if (task.title && (task.title.includes('dscds') || task.title.includes('Fujairah') || shouldInclude)) {
+              console.log(`Task "${task.title}" check:`, {
+                taskId: task.id,
+                userId: user.id,
+                userName: user.name,
+                isCreator,
+                isAssignedTo,
+                isInAssignees,
+                shouldInclude,
+                taskCreatedBy: task.created_by,
+                taskAssignedTo: task.assigned_to,
+                taskAssignees: assigneesData,
+                rawAssignees: task.assignees
+              });
+            }
+            
+            return shouldInclude;
           });
           
           console.log("Filtered tasks for user:", {
