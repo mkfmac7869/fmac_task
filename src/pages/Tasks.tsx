@@ -19,23 +19,13 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useTaskFilters } from '@/hooks/useTaskFilters';
 
 const Tasks = () => {
-  console.log("Tasks component rendering");
-  
-  try {
-    const navigate = useNavigate();
-    const { tasks, updateTask, deleteTask, getTasksByStatus, isLoading, refreshTasks } = useTask();
-    const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
-    const [viewMode, setViewMode] = useState<ViewMode>('list');
-    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-    const [isPanelOpen, setIsPanelOpen] = useState(false);
-    const isMobile = useIsMobile();
-    
-    console.log("Tasks component state:", { 
-      tasksCount: tasks?.length, 
-      isLoading, 
-      isMobile, 
-      viewMode 
-    });
+  const navigate = useNavigate();
+  const { tasks, updateTask, deleteTask, getTasksByStatus, isLoading, refreshTasks } = useTask();
+  const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const isMobile = useIsMobile();
   
   // Use task filters hook
   const {
@@ -48,12 +38,6 @@ const Tasks = () => {
     activeFilterCount,
     availableTags
   } = useTaskFilters(tasks);
-  
-  console.log("Task filters state:", { 
-    filteredTasksCount: filteredTasks?.length, 
-    activeFilterCount,
-    filters 
-  });
   
   // Mobile-optimized view
   const effectiveViewMode = isMobile ? 'list' : viewMode;
@@ -236,27 +220,6 @@ const Tasks = () => {
       />
     </Layout>
   );
-  
-  } catch (error) {
-    console.error("Tasks component crashed:", error);
-    return (
-      <Layout>
-        <div className="flex justify-center items-center h-full">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900">Something went wrong</h2>
-            <p className="text-gray-600 mt-2">There was an error loading the tasks page.</p>
-            <p className="text-sm text-gray-500 mt-1">Error: {error instanceof Error ? error.message : 'Unknown error'}</p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-            >
-              Reload Page
-            </button>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
 };
 
 export default Tasks;

@@ -136,9 +136,13 @@ export const useTaskFilters = (tasks: Task[]) => {
 
       // Tag filter
       if (filters.tags.length > 0) {
-        const taskTags = task.tags || [];
+        // Handle both array and string (JSON) formats for task tags
+        const taskTags = Array.isArray(task.tags) ? task.tags : [];
         const hasAllTags = filters.tags.every(filterTag => 
-          taskTags.some(taskTag => taskTag.toLowerCase() === filterTag.toLowerCase())
+          taskTags.some(taskTag => 
+            typeof taskTag === 'string' && 
+            taskTag.toLowerCase() === filterTag.toLowerCase()
+          )
         );
         if (!hasAllTags) return false;
       }
@@ -223,7 +227,13 @@ export const useTaskFilters = (tasks: Task[]) => {
     const tagSet = new Set<string>();
     tasks.forEach(task => {
       if (task.tags) {
-        task.tags.forEach(tag => tagSet.add(tag));
+        // Handle both array and string (JSON) formats
+        const tags = Array.isArray(task.tags) ? task.tags : [];
+        tags.forEach(tag => {
+          if (typeof tag === 'string' && tag.trim()) {
+            tagSet.add(tag.trim());
+          }
+        });
       }
     });
     return Array.from(tagSet).sort();
