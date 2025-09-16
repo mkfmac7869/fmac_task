@@ -177,12 +177,14 @@ const ClickUpTaskDetails = () => {
       })));
 
       // Load attachments from Firebase - this is the source of truth
+      console.log('Loading attachments for task:', taskId);
       const attachmentsData = await FirebaseService.getDocuments('attachments', [
         { field: 'taskId', operator: '==', value: taskId }
       ]);
+      console.log('Found attachments from Firestore:', attachmentsData.length, attachmentsData);
       
       // Always use attachments from Firestore as the source of truth
-      setAttachments(attachmentsData.map((a: any) => ({
+      const processedAttachments = attachmentsData.map((a: any) => ({
         id: a.id,
         name: a.name,
         size: a.size,
@@ -190,7 +192,9 @@ const ClickUpTaskDetails = () => {
         url: a.url,
         uploadedBy: a.uploadedBy,
         uploadedAt: a.uploadedAt
-      })))
+      }));
+      console.log('Setting attachments state:', processedAttachments);
+      setAttachments(processedAttachments);
 
       // Load activities from Firebase - try multiple approaches
       console.log('=== LOADING ACTIVITIES ===');
@@ -295,8 +299,8 @@ const ClickUpTaskDetails = () => {
             try {
               const creatorProfile = await FirebaseService.getDocument('profiles', creatorId);
               if (creatorProfile) {
-                creatorName = creatorProfile.name || 'Unknown User';
-                creatorAvatar = creatorProfile.avatar || `/placeholder.svg`;
+                creatorName = (creatorProfile as any).name || 'Unknown User';
+                creatorAvatar = (creatorProfile as any).avatar || `/placeholder.svg`;
               }
             } catch (error) {
               console.log('Could not fetch creator profile:', error);
@@ -665,7 +669,10 @@ const ClickUpTaskDetails = () => {
       // Add activity
       await addActivity('attachment', `removed ${attachmentToDelete.name}`);
 
-      // Reload attachments from Firestore to ensure consistency
+      // Clear the attachment from state immediately for better UX
+      setAttachments(prev => prev.filter(att => att.id !== attachmentToDelete.id));
+      
+      // Then reload all data from Firestore to ensure consistency
       await loadTaskRelatedData(task.id, task);
 
       toast({
@@ -1152,7 +1159,6 @@ const ClickUpTaskDetails = () => {
 
                   <TabsContent value="activity" className="mt-4">
                     <div className="space-y-4">
-                      {console.log('Rendering activities tab, activities state:', activities)}
                       {activities.length > 0 ? (
                         activities.map((activity) => {
                           let icon = null;

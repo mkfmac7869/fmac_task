@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   X, 
@@ -106,22 +106,14 @@ const ClickUpTaskPanel = ({
   
   const isAdmin = user?.roles?.includes('admin') || false;
 
-  // Initialize state when task changes
-  useEffect(() => {
-    if (task) {
-      setComments(task.comments || []);
-      // Don't initialize attachments from task - we'll load from Firestore
-      setTags(task.tags || []);
-      loadAttachments();
-    }
-  }, [task]);
-
-  const loadAttachments = async () => {
+  const loadAttachments = useCallback(async () => {
     if (!task) return;
     try {
+      console.log('Loading attachments for task:', task.id);
       const attachmentsData = await FirebaseService.getDocuments('attachments', [
         { field: 'taskId', operator: '==', value: task.id }
       ]);
+      console.log('Found attachments:', attachmentsData.length);
       setAttachments(attachmentsData.map((a: any) => ({
         id: a.id,
         name: a.name,
@@ -134,7 +126,17 @@ const ClickUpTaskPanel = ({
     } catch (error) {
       console.error('Error loading attachments:', error);
     }
-  };
+  }, [task?.id]);
+
+  // Initialize state when task changes
+  useEffect(() => {
+    if (task) {
+      setComments(task.comments || []);
+      // Don't initialize attachments from task - we'll load from Firestore
+      setTags(task.tags || []);
+      loadAttachments();
+    }
+  }, [task, loadAttachments]);
 
   if (!task || !isOpen) return null;
 
@@ -296,7 +298,10 @@ const ClickUpTaskPanel = ({
         await FirebaseService.deleteDocument('attachments', attachmentDocs[0].id);
       }
 
-      // Reload attachments from Firestore to ensure consistency
+      // Clear attachments first to show immediate feedback
+      setAttachments(prev => prev.filter(att => att.id !== attachmentToDelete.id));
+      
+      // Then reload from Firestore to ensure consistency
       await loadAttachments();
 
       toast({
