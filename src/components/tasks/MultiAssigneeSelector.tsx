@@ -186,3 +186,4 @@ const MultiAssigneeSelector: React.FC<MultiAssigneeSelectorProps> = ({
 };
 
 export default MultiAssigneeSelector;
+export { MultiAssigneeSelector };
