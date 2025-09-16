@@ -7,7 +7,7 @@ import { TaskStatus, TaskPriority } from '@/types/task';
 import { format } from 'date-fns';
 import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
 import { Badge } from '@/components/ui/badge';
-import MultiAssigneeSelector from './MultiAssigneeSelector';
+import { MultiAssigneeSelector } from './MultiAssigneeSelector';
 
 interface MinimalNewTaskDialogProps {
   isOpen: boolean;
