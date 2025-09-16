@@ -1,9 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus, User } from 'lucide-react';
-import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Check, X, Users, Plus } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Assignee {
   id: string;
@@ -13,153 +15,151 @@ interface Assignee {
 }
 
 interface MultiAssigneeSelectorProps {
-  assignees: Assignee[];
+  selectedAssignees: Assignee[];
+  availableMembers: Assignee[];
   onAssigneesChange: (assignees: Assignee[]) => void;
   isAdmin?: boolean;
+  disabled?: boolean;
   className?: string;
 }
 
 const MultiAssigneeSelector: React.FC<MultiAssigneeSelectorProps> = ({
-  assignees,
+  selectedAssignees,
+  availableMembers,
   onAssigneesChange,
   isAdmin = false,
-  className = ''
+  disabled = false,
+  className
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const { members, isLoading } = useFetchMembers();
+  const [open, setOpen] = useState(false);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-        setSearchTerm('');
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const filteredMembers = members.filter(member => 
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    !assignees.some(assignee => assignee.id === member.id)
-  );
-
-  const handleAddAssignee = (member: any) => {
-    const newAssignee: Assignee = {
-      id: member.id,
-      name: member.name,
-      avatar: member.avatar,
-      email: member.email
-    };
-    onAssigneesChange([...assignees, newAssignee]);
-    setSearchTerm('');
-    setIsOpen(false);
+  const handleAssigneeToggle = (member: Assignee) => {
+    const isSelected = selectedAssignees.some(assignee => assignee.id === member.id);
+    
+    if (isSelected) {
+      // Remove assignee
+      onAssigneesChange(selectedAssignees.filter(assignee => assignee.id !== member.id));
+    } else {
+      // Add assignee
+      onAssigneesChange([...selectedAssignees, member]);
+    }
   };
 
-  const handleRemoveAssignee = (assigneeId: string) => {
-    onAssigneesChange(assignees.filter(assignee => assignee.id !== assigneeId));
+  const removeAssignee = (assigneeId: string) => {
+    onAssigneesChange(selectedAssignees.filter(assignee => assignee.id !== assigneeId));
   };
 
-  if (!isAdmin) {
-    // Non-admin users can only see assignees, not modify them
+  if (!isAdmin && selectedAssignees.length === 0) {
     return (
-      <div className={`flex flex-wrap gap-2 ${className}`}>
-        {assignees.length > 0 ? (
-          assignees.map((assignee) => (
-            <div key={assignee.id} className="flex items-center gap-2">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={assignee.avatar} />
-                <AvatarFallback className="text-xs">{assignee.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-gray-700">{assignee.name}</span>
+      <div className="flex items-center gap-2 text-sm text-gray-500">
+        <Users className="h-4 w-4" />
+        <span>No assignees</span>
+      </div>
+    );
+  }
+
+  if (!isAdmin && selectedAssignees.length > 0) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="flex -space-x-2">
+          {selectedAssignees.slice(0, 3).map((assignee) => (
+            <Avatar key={assignee.id} className="h-6 w-6 border-2 border-white">
+              <AvatarImage src={assignee.avatar} />
+              <AvatarFallback className="text-xs">{assignee.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+          ))}
+          {selectedAssignees.length > 3 && (
+            <div className="h-6 w-6 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center">
+              <span className="text-xs font-medium">+{selectedAssignees.length - 3}</span>
             </div>
-          ))
-        ) : (
-          <span className="text-sm text-gray-400">No assignees</span>
-        )}
+          )}
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {selectedAssignees.map((assignee) => (
+            <Badge key={assignee.id} variant="secondary" className="text-xs">
+              {assignee.name}
+            </Badge>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
-      {/* Assignees Display */}
-      <div className="flex flex-wrap gap-2 mb-2">
-        {assignees.map((assignee) => (
-          <Badge key={assignee.id} variant="secondary" className="flex items-center gap-1 px-2 py-1">
-            <Avatar className="h-4 w-4">
-              <AvatarImage src={assignee.avatar} />
-              <AvatarFallback className="text-xs">{assignee.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <span className="text-xs">{assignee.name}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-4 w-4 p-0 hover:bg-red-100 hover:text-red-600"
-              onClick={() => handleRemoveAssignee(assignee.id)}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </Badge>
-        ))}
-      </div>
+    <div className={cn("space-y-2", className)}>
+      {/* Selected Assignees */}
+      {selectedAssignees.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedAssignees.map((assignee) => (
+            <Badge key={assignee.id} variant="secondary" className="flex items-center gap-1 pr-1">
+              <Avatar className="h-4 w-4">
+                <AvatarImage src={assignee.avatar} />
+                <AvatarFallback className="text-xs">{assignee.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <span className="text-xs">{assignee.name}</span>
+              {!disabled && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0 hover:bg-transparent"
+                  onClick={() => removeAssignee(assignee.id)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </Badge>
+          ))}
+        </div>
+      )}
 
       {/* Add Assignee Button */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-8 px-3 text-xs"
-      >
-        <Plus className="h-3 w-3 mr-1" />
-        Add Assignee
-      </Button>
-
-      {/* Dropdown */}
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-          <div className="p-2">
-            <input
-              type="text"
-              placeholder="Search members..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoFocus
-            />
-          </div>
-          
-          <div className="max-h-48 overflow-y-auto">
-            {isLoading ? (
-              <div className="p-3 text-sm text-gray-500 text-center">Loading members...</div>
-            ) : filteredMembers.length > 0 ? (
-              filteredMembers.map((member) => (
-                <button
-                  key={member.id}
-                  onClick={() => handleAddAssignee(member)}
-                  className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 text-left"
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={member.avatar} />
-                    <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">{member.name}</p>
-                    <p className="text-xs text-gray-500">{member.email}</p>
-                  </div>
-                </button>
-              ))
-            ) : (
-              <div className="p-3 text-sm text-gray-500 text-center">
-                {searchTerm ? 'No members found' : 'No available members'}
-              </div>
-            )}
-          </div>
-        </div>
+      {!disabled && (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 border-dashed"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              {selectedAssignees.length === 0 ? 'Assign members' : 'Add member'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Search members..." />
+              <CommandEmpty>No members found.</CommandEmpty>
+              <CommandGroup>
+                {availableMembers.map((member) => {
+                  const isSelected = selectedAssignees.some(assignee => assignee.id === member.id);
+                  return (
+                    <CommandItem
+                      key={member.id}
+                      onSelect={() => handleAssigneeToggle(member)}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2 flex-1">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={member.avatar} />
+                          <AvatarFallback className="text-xs">{member.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{member.name}</p>
+                          {member.email && (
+                            <p className="text-xs text-gray-500">{member.email}</p>
+                          )}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <Check className="h-4 w-4 text-green-600" />
+                      )}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </Command>
+          </PopoverContent>
+        </Popover>
       )}
     </div>
   );

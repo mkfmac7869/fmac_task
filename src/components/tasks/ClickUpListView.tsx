@@ -269,28 +269,9 @@ const ClickUpListView = ({ tasks, onTaskClick, onUpdateTask }: ClickUpListViewPr
                         </span>
                       </div>
 
-                      {/* Multiple Assignees */}
+                      {/* Assignee */}
                       <div className="col-span-2 flex items-center">
-                        {task.assignees && task.assignees.length > 0 ? (
-                          <div className="flex items-center gap-1">
-                            {task.assignees.slice(0, 3).map((assignee, index) => (
-                              <Avatar key={assignee.id} className="h-6 w-6">
-                                <AvatarImage src={assignee.avatar} />
-                                <AvatarFallback className="text-xs">
-                                  {assignee.name.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
-                            ))}
-                            {task.assignees.length > 3 && (
-                              <div className="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center">
-                                <span className="text-xs text-gray-600">+{task.assignees.length - 3}</span>
-                              </div>
-                            )}
-                            <span className="text-sm text-gray-700 truncate hidden lg:block ml-2">
-                              {task.assignees.map(a => a.name).join(', ')}
-                            </span>
-                          </div>
-                        ) : task.assignee ? (
+                        {task.assignee ? (
                           <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
                               <AvatarImage src={task.assignee.avatar} />
