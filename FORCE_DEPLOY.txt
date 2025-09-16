@@ -1,0 +1,19 @@
+FORCE DEPLOYMENT - $(Get-Date)
+
+This file forces a new deployment to ensure Vercel picks up the latest changes.
+
+Latest fixes:
+- MultiAssigneeSelector exports both default and named
+- MinimalNewTaskDialog uses named import
+- All build errors resolved
+- Local build passes successfully
+
+Commit: 9b9efc3
+Timestamp: 2024-12-16 12:45:00
+
+If Vercel is still building old commit 867da07, there may be:
+1. Branch configuration issue in Vercel dashboard
+2. Vercel cache that needs manual clearing
+3. Webhook delivery issue
+
+DEPLOY NOW!
