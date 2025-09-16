@@ -7,7 +7,7 @@ import { TaskStatus, TaskPriority } from '@/types/task';
 import { format } from 'date-fns';
 import { useFetchMembers } from '@/hooks/memberManagement/useFetchMembers';
 import { Badge } from '@/components/ui/badge';
-import { MultiAssigneeSelector } from './MultiAssigneeSelector';
+// import { MultiAssigneeSelector } from './MultiAssigneeSelector';
 
 interface MinimalNewTaskDialogProps {
   isOpen: boolean;
@@ -413,23 +413,64 @@ const MinimalNewTaskDialog: React.FC<MinimalNewTaskDialogProps> = ({ isOpen, onO
               </div>
             </div>
             
-            {/* Assignees */}
+            {/* Assignee (Simplified for deployment) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Assignees
+                Assignee
               </label>
-              <MultiAssigneeSelector
-                selectedAssignees={assignees}
-                availableMembers={users?.map(user => ({
-                  id: user.id,
-                  name: user.name,
-                  avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`,
-                  email: user.email
-                })) || []}
-                onAssigneesChange={setAssignees}
-                isAdmin={isAdmin}
-                disabled={isSubmitting || isLoadingUsers}
-              />
+              {isAdmin ? (
+                <select
+                  value={assignees.length > 0 ? assignees[0].id : ''}
+                  onChange={(e) => {
+                    const selectedUser = users?.find(u => u.id === e.target.value);
+                    if (selectedUser) {
+                      setAssignees([{
+                        id: selectedUser.id,
+                        name: selectedUser.name,
+                        avatar: selectedUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}`,
+                        email: selectedUser.email
+                      }]);
+                    } else {
+                      setAssignees([]);
+                    }
+                  }}
+                  disabled={isSubmitting || isLoadingUsers}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                >
+                  <option value="">Unassigned</option>
+                  {users?.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="flex items-center p-2 bg-gray-50 rounded-md">
+                  <input
+                    id="assign-to-self"
+                    type="checkbox"
+                    checked={assignees.length > 0 && assignees[0].id === user?.id}
+                    onChange={(e) => {
+                      if (e.target.checked && user) {
+                        setAssignees([{
+                          id: user.id,
+                          name: user.name,
+                          avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`,
+                          email: user.email
+                        }]);
+                      } else {
+                        setAssignees([]);
+                      }
+                    }}
+                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                    disabled={isSubmitting}
+                  />
+                  <label htmlFor="assign-to-self" className="ml-2 text-sm text-gray-700 flex items-center">
+                    <User className="h-4 w-4 mr-1" />
+                    Assign to me
+                  </label>
+                </div>
+              )}
             </div>
             
             {/* Tags */}
