@@ -114,15 +114,25 @@ const ClickUpTaskPanel = ({
         { field: 'taskId', operator: '==', value: task.id }
       ]);
       console.log('Found attachments:', attachmentsData.length);
-      setAttachments(attachmentsData.map((a: any) => ({
-        id: a.id,
-        name: a.name,
-        size: a.size,
-        type: a.type,
-        url: a.url,
-        uploadedBy: a.uploadedBy,
-        uploadedAt: a.uploadedAt
-      })));
+      console.log('Raw attachment data from Firestore:', attachmentsData);
+      
+      const processedAttachments = attachmentsData.map((a: any) => {
+        // Use the Firestore document ID as the attachment ID
+        const attachment = {
+          id: a.id, // This is the Firestore document ID
+          name: a.name,
+          size: a.size,
+          type: a.type,
+          url: a.url,
+          uploadedBy: a.uploadedBy,
+          uploadedAt: a.uploadedAt
+        };
+        console.log('Processed attachment:', attachment);
+        return attachment;
+      });
+      
+      console.log('Setting attachments state with:', processedAttachments);
+      setAttachments(processedAttachments);
     } catch (error) {
       console.error('Error loading attachments:', error);
     }
@@ -207,22 +217,20 @@ const ClickUpTaskPanel = ({
         const downloadURL = await FirebaseService.uploadFile(file, filePath);
         
         // Create attachment object with the Firebase Storage URL
-        const attachment: Attachment = {
-          id: Date.now().toString(),
+        const attachmentData = {
           name: file.name,
           size: file.size,
           type: file.type,
           url: downloadURL,
           uploadedBy: user?.name || 'Unknown User',
-          uploadedAt: new Date().toISOString()
+          uploadedAt: new Date().toISOString(),
+          taskId: task.id,
+          filePath: filePath // Store the path for potential deletion later
         };
         
         // Save attachment metadata to Firestore
-        await FirebaseService.addDocument('attachments', {
-          ...attachment,
-          taskId: task.id,
-          filePath: filePath // Store the path for potential deletion later
-        });
+        const savedDoc = await FirebaseService.addDocument('attachments', attachmentData);
+        console.log('Saved attachment with Firestore ID:', savedDoc.id);
         
         // Just reload attachments from Firestore to get the new attachment
         await loadAttachments();
