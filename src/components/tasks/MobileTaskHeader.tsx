@@ -9,7 +9,8 @@ import {
   Flag,
   Folder,
   Check,
-  Tag
+  Tag,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +39,7 @@ interface MobileTaskHeaderProps {
   projectName?: string;
   taskCount?: number;
   onMenuClick?: () => void;
+  onRefresh?: () => void;
   filters: any;
   sortConfig: any;
   updateFilter: (key: string, value: any) => void;
@@ -51,6 +53,7 @@ const MobileTaskHeader = ({
   projectName = 'All Tasks',
   taskCount = 0,
   onMenuClick,
+  onRefresh,
   filters,
   sortConfig,
   updateFilter,
@@ -87,6 +90,18 @@ const MobileTaskHeader = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Refresh Button */}
+          {onRefresh && (
+            <Button 
+              onClick={onRefresh}
+              variant="outline"
+              size="sm"
+              className="h-9 w-9 p-0"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          )}
+          
           {/* Filter Button */}
           <Sheet open={showFilters} onOpenChange={setShowFilters}>
             <SheetTrigger asChild>

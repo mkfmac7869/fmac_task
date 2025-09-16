@@ -20,7 +20,7 @@ import { useTaskFilters } from '@/hooks/useTaskFilters';
 
 const Tasks = () => {
   const navigate = useNavigate();
-  const { tasks, updateTask, deleteTask, getTasksByStatus, isLoading } = useTask();
+  const { tasks, updateTask, deleteTask, getTasksByStatus, isLoading, refreshTasks } = useTask();
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -98,6 +98,7 @@ const Tasks = () => {
             onMenuClick={() => {
               // Handle menu click if needed
             }}
+            onRefresh={refreshTasks}
             filters={filters}
             sortConfig={sortConfig}
             updateFilter={updateFilter}
@@ -146,6 +147,7 @@ const Tasks = () => {
         {/* Desktop Header */}
         <EnhancedTaskHeader 
           onNewTask={() => setIsNewTaskDialogOpen(true)}
+          onRefresh={refreshTasks}
           taskCount={filteredTasks.length}
           filters={filters}
           sortConfig={sortConfig}

@@ -10,7 +10,8 @@ import {
   Folder,
   Check,
   SortAsc,
-  Tag
+  Tag,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,7 @@ import { useTask } from '@/context/TaskContext';
 
 interface EnhancedTaskHeaderProps {
   onNewTask: () => void;
+  onRefresh?: () => void;
   taskCount: number;
   filters: TaskFilters;
   sortConfig: SortConfig;
@@ -50,6 +52,7 @@ interface EnhancedTaskHeaderProps {
 
 const EnhancedTaskHeader = ({ 
   onNewTask,
+  onRefresh,
   taskCount,
   filters,
   sortConfig,
@@ -74,13 +77,26 @@ const EnhancedTaskHeader = ({
             </p>
           </div>
           
-          <Button 
-            onClick={onNewTask}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Task
-          </Button>
+          <div className="flex items-center gap-2">
+            {onRefresh && (
+              <Button 
+                onClick={onRefresh}
+                variant="outline"
+                className="border-gray-300 hover:bg-gray-50"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            )}
+            
+            <Button 
+              onClick={onNewTask}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New Task
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
