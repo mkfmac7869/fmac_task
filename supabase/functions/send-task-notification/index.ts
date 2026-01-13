@@ -74,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <p>Please log in to your account to view the complete task details and respond.</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${Deno.env.get("PUBLIC_URL") || "http://localhost:5173"}/tasks/${taskId}" 
+            <a href="https://taskfmac.dev/tasks/${taskId}" 
                style="background-color: #ea384c; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">
               View Task Details
             </a>
@@ -117,7 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <p>Please log in to your account to view the complete task details and get started.</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${Deno.env.get("PUBLIC_URL") || "http://localhost:5173"}/tasks/${taskId}" 
+            <a href="https://taskfmac.dev/tasks/${taskId}" 
                style="background-color: #ea384c; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">
               View Task Details
             </a>

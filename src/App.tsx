@@ -13,6 +13,7 @@ import './styles/clickup-theme.css';
 import Index from './pages/Index';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import Tasks from './pages/Tasks';
 import ClickUpTaskDetails from './pages/ClickUpTaskDetails';
@@ -59,6 +60,11 @@ function App() {
             <Route path="/signup" element={
               <AuthGuard requireAuth={false}>
                 <Signup />
+              </AuthGuard>
+            } />
+            <Route path="/forgot-password" element={
+              <AuthGuard requireAuth={false}>
+                <ForgotPassword />
               </AuthGuard>
             } />
             

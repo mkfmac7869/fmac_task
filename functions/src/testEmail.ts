@@ -49,7 +49,7 @@ export const testEmailNotification = functions
         
         <p>If you received this email, the notification system is working correctly!</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="https://fmac-tasks.vercel.app/tasks/${taskId || 'test'}" 
+          <a href="https://taskfmac.dev/tasks/${taskId || 'test'}" 
              style="background-color: #ea384c; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">
             View Task Details
           </a>

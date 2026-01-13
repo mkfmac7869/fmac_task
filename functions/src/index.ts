@@ -126,7 +126,7 @@ export const sendTaskAssignmentNotification = functions
           
           <p>Please log in to your account to view the complete task details and get started.</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://fmac-tasks.vercel.app/tasks/${taskId}" 
+            <a href="https://taskfmac.dev/tasks/${taskId}" 
                style="background-color: #ea384c; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">
               View Task Details
             </a>
@@ -257,7 +257,7 @@ export const sendTaskUpdateNotification = functions
           
           <p>Please log in to your account to view the complete task details and get started.</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://fmac-tasks.vercel.app/tasks/${taskId}" 
+            <a href="https://taskfmac.dev/tasks/${taskId}" 
                style="background-color: #ea384c; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">
               View Task Details
             </a>
